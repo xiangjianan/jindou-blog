@@ -3,6 +3,8 @@ import starlight from '@astrojs/starlight';
 import mdx from '@astrojs/mdx';
 
 export default defineConfig({
+  site: 'https://xiangjianan.github.io/jindou-blog',
+  base: '/jindou-blog',
   integrations: [
     starlight({
       title: '金豆的 AI 笔记',

@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 :root {
   --sl-font-mono: 'Noto Sans SC', monospace;
   --sl-color-accent: #c67b3c;
@@ -10,33 +6,36 @@
   --sl-color-bg: #fefcf8;
   --sl-color-heading: #3d3229;
   --sl-color-hr: #e8ddd0;
+  --sl-color-bg-sidebar: #fefcf8;
+  --sl-color-bg-content: #fefcf8;
+  --sl-color-bg-nav: #fefcf8;
+  --sl-color-page-bg: #fdf6e3;
 }
 
 /* 杂志风标题 */
 .sl-font-mono { font-family: 'Noto Serif SC', Georgia, serif !important; }
-h1, h2, h3, h4 { font-family: 'Noto Serif SC', Georgia, serif; }
+h1, h2, h3, h4 { font-family: 'Noto Serif SC', Georgia, serif !important; }
 
 /* 优雅的正文 */
 body { 
-  font-family: 'Noto Sans SC', system-ui, sans-serif;
-  line-height: 1.9;
+  font-family: 'Noto Sans SC', system-ui, sans-serif !important;
+  line-height: 1.9 !important;
   color: #2c2419;
 }
 
 /* Starlight override - 温暖背景 */
-[slot=page-content] {
-  font-size: 1.1rem;
-  max-width: 720px;
+.sl-markdown {
+  font-size: 1.08rem;
 }
 
 /* 美化代码块 */
-pre {
+.sl-markdown pre {
   border-radius: 12px;
   border: 1px solid #e8ddd0;
 }
 
 /* 引用块样式 */
-blockquote {
+.sl-markdown blockquote {
   border-left: 3px solid #c67b3c;
   background: #fdf6e3;
   padding: 1rem 1.5rem;
