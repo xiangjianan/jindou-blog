@@ -15,11 +15,19 @@ export default defineConfig({
       sidebar: [
         { label: 'AI 前沿', items: [
           { label: 'UI-Voyager：从失败中进化的 GUI Agent', link: '/ai/ui-voyager' },
+          { label: 'Dynamic Belief Graphs：理解 AI 的心理理论', link: '/ai/dynamic-belief-graphs' },
+          { label: 'GSEM：Agent 记忆架构的进化', link: '/ai/gsem-memory-graph' },
           { label: 'Bilevel Autoresearch：自我优化的自动研究', link: '/ai/bilevel-autoresearch' },
+          { label: '效率衰减现象：强迫 AI 说人话更差？', link: '/ai/efficiency-attenuation' },
+          { label: '可解释性研究的评价困境', link: '/ai/interpretability-evaluation' },
         ]},
         { label: '科普教程', items: [
           { label: '注意力机制入门', link: '/tutorials/attention' },
+          { label: 'Multi-Head Attention 深度解析', link: '/tutorials/multi-head-attention' },
           { label: 'Chain-of-Thought 思维链', link: '/tutorials/chain-of-thought' },
+          { label: 'LLM 幻觉：从入门到高级', link: '/tutorials/hallucination' },
+          { label: '涌现通信：AI 如何发明语言', link: '/tutorials/emergent-communication' },
+          { label: 'Agent 记忆架构详解', link: '/tutorials/agent-memory' },
         ]},
         { label: '研究笔记', items: [
           { label: '稀疏自编码器与文化引导', link: '/notes/sae-cultural-steering' },
