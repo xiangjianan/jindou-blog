@@ -3,8 +3,7 @@ import starlight from '@astrojs/starlight';
 import mdx from '@astrojs/mdx';
 
 export default defineConfig({
-  site: 'https://xiangjianan.github.io/jindou-blog',
-  base: '/jindou-blog',
+  site: 'https://jindou-blog.pages.dev',
   integrations: [
     starlight({
       title: '金豆的 AI 笔记',
@@ -30,7 +29,6 @@ export default defineConfig({
         { tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.googleapis.com' } },
         { tag: 'link', attrs: { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' } },
         { tag: 'link', attrs: { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap' } },
-        { tag: 'script', attrs: { src: '/jindou-blog/scripts/fix-base.js' } },
       ],
       customCss: [
         './src/styles/custom.css',
