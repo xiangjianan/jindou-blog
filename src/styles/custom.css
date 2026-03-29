@@ -48,7 +48,7 @@
 h1, h2, h3, h4 { font-family: 'Noto Serif SC', Georgia, serif !important; }
 
 /* 优雅的正文 */
-body { 
+body {
   font-family: 'Noto Sans SC', system-ui, sans-serif !important;
   line-height: 1.9 !important;
 }
@@ -87,3 +87,32 @@ body {
   color: #d4c8b8;
 }
 
+/* Hide default Starlight header since we have CustomHeader */
+header.sl-header {
+  display: none !important;
+}
+
+/* Adjust main content to account for missing default header */
+.main-frame {
+  padding-top: 0 !important;
+}
+
+/* Sidebar refinements */
+.sidebar-content .sidebar-item a {
+  font-size: 0.92rem;
+}
+
+.sidebar-content .sidebar-item a[aria-current="page"] {
+  color: var(--sl-color-accent);
+  font-weight: 600;
+}
+
+/* Smooth page transitions */
+.sl-container {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
