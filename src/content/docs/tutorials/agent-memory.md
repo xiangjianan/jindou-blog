@@ -12,7 +12,32 @@ tags: [教程, Agent架构, 记忆系统, 知识图谱]
 - 建立知识间的关联
 - 根据新信息修正旧认知
 
-## 三代记忆架构
+## 三代记忆架构演进
+
+```mermaid
+flowchart LR
+    subgraph Gen1["第一代：Flat List"]
+        direction TB
+        E1["经验1"] --- E2["经验2"]
+        E2 --- E3["经验3"]
+        E3 --- E4["..."]
+    end
+    
+    subgraph Gen2["第二代：Structured Memory"]
+        direction TB
+        WM["短期记忆"] --> LM["长期记忆"]
+        LM --> ARCH["归档"]
+    end
+    
+    subgraph Gen3["第三代：Graph Memory 🔥"]
+        direction TB
+        N1["API超时重试"] -->|导致| N2["重试失败→报警"]
+        N1 -->|优于| N3["直接报错"]
+        N2 -->|依赖| N4["告警系统配置"]
+    end
+    
+    Gen1 -->|演进| Gen2 -->|演进| Gen3
+```
 
 ### 第一代：Flat List（扁平列表）
 

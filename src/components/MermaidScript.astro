@@ -1,0 +1,25 @@
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Convert code blocks with language "mermaid" to mermaid diagrams
+    const preBlocks = document.querySelectorAll('pre[data-language="mermaid"]');
+    preBlocks.forEach(pre => {
+      const code = pre.querySelector('code');
+      if (!code) return;
+      const mermaidDiv = document.createElement('pre');
+      mermaidDiv.classList.add('mermaid');
+      mermaidDiv.textContent = code.textContent;
+      pre.replaceWith(mermaidDiv);
+    });
+    // Load mermaid and render
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
+    script.onload = () => {
+      mermaid.initialize({ 
+        startOnLoad: true, 
+        theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+      });
+      mermaid.run();
+    };
+    document.head.appendChild(script);
+  });
+</script>

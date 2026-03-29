@@ -1,8 +1,10 @@
+/* ===== 浅色主题 ===== */
 :root {
   --sl-font-mono: 'Noto Sans SC', monospace;
   --sl-color-accent: #c67b3c;
   --sl-color-accent-high: #a85d2a;
   --sl-color-text: #2c2419;
+  --sl-color-text-mute: #6b5c4d;
   --sl-color-bg: #fefcf8;
   --sl-color-heading: #3d3229;
   --sl-color-hr: #e8ddd0;
@@ -10,6 +12,35 @@
   --sl-color-bg-content: #fefcf8;
   --sl-color-bg-nav: #fefcf8;
   --sl-color-page-bg: #fdf6e3;
+  --sl-color-border: #e8ddd0;
+  --sl-color-gray-1: #2c2419;
+  --sl-color-gray-2: #5a4d3f;
+  --sl-color-gray-3: #8a7a6a;
+  --sl-color-gray-4: #b5a898;
+  --sl-color-gray-5: #d4c8b8;
+  --sl-color-gray-6: #e8ddd0;
+  --sl-color-gray-7: #f5e6c8;
+}
+
+/* ===== 深色主题 ===== */
+[data-theme="dark"] {
+  --sl-color-text: #d4c8b8;
+  --sl-color-text-mute: #8a7a6a;
+  --sl-color-bg: #1a1510;
+  --sl-color-heading: #e8ddd0;
+  --sl-color-hr: #3d3229;
+  --sl-color-bg-sidebar: #1a1510;
+  --sl-color-bg-content: #211c15;
+  --sl-color-bg-nav: #1a1510;
+  --sl-color-page-bg: #150f0a;
+  --sl-color-border: #3d3229;
+  --sl-color-gray-1: #e8ddd0;
+  --sl-color-gray-2: #d4c8b8;
+  --sl-color-gray-3: #b5a898;
+  --sl-color-gray-4: #8a7a6a;
+  --sl-color-gray-5: #5a4d3f;
+  --sl-color-gray-6: #3d3229;
+  --sl-color-gray-7: #211c15;
 }
 
 /* 杂志风标题 */
@@ -20,7 +51,11 @@ h1, h2, h3, h4 { font-family: 'Noto Serif SC', Georgia, serif !important; }
 body { 
   font-family: 'Noto Sans SC', system-ui, sans-serif !important;
   line-height: 1.9 !important;
-  color: #2c2419;
+}
+
+/* 深色模式正文颜色 */
+[data-theme="dark"] body {
+  color: #d4c8b8;
 }
 
 /* Starlight override - 温暖背景 */
@@ -31,7 +66,11 @@ body {
 /* 美化代码块 */
 .sl-markdown pre {
   border-radius: 12px;
-  border: 1px solid #e8ddd0;
+  border: 1px solid var(--sl-color-border, #e8ddd0);
+}
+
+[data-theme="dark"] .sl-markdown pre {
+  border-color: #3d3229;
 }
 
 /* 引用块样式 */
@@ -42,3 +81,9 @@ body {
   border-radius: 0 8px 8px 0;
   font-style: italic;
 }
+
+[data-theme="dark"] .sl-markdown blockquote {
+  background: #2a2318;
+  color: #d4c8b8;
+}
+

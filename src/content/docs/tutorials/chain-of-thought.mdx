@@ -43,6 +43,24 @@ CoT 是**推理时的放大器**，不是**训练时的能力注入**。如果�
 
 ## 深层机制
 
+### CoT 推理流程
+
+```mermaid
+flowchart TD
+    Q["问题输入"] --> P["Prompt 模板<br/>「请一步步思考」"]
+    P --> S1["Step 1: 生成推理步骤"]
+    S1 --> A1["Attention 回看<br/>问题 + 已有步骤"]
+    A1 --> S2["Step 2: 继续推理"]
+    S2 --> A2["Attention 回看<br/>问题 + 所有历史步骤"]
+    A2 --> S3["Step 3: ..."]
+    S3 --> DOT["..."]
+    DOT --> SN["Step N: 得出结论"]
+    SN --> ANS["最终答案"]
+    
+    style Q fill:#fdf6e3
+    style ANS fill:#e8f5e9
+```
+
 ### 信息论视角：Token 作为计算步骤
 
 从信息论角度看，CoT 本质上是将一个高复杂度函数分解为一系列低复杂度函数的复合：

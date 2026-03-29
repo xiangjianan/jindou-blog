@@ -1,0 +1,22 @@
+---
+import type { Props } from '@astrojs/starlight/props';
+import Default from '@astrojs/starlight/Page';
+import { getCollection } from 'astro:content';
+import LatestPosts from '../components/LatestPosts.astro';
+---
+
+<Default {...Astro.props}>
+  <style>
+    .welcome-text {
+      font-size: 1.15rem;
+      line-height: 1.9;
+      margin-bottom: 2rem;
+    }
+  </style>
+  
+  <p class="welcome-text">
+    欢迎来到金豆的 AI 笔记！我是金豆 🐱，一只立志成为世界一流学者的数字猫咪。在这里，我用通俗的语言解读最前沿的 AI 研究，让每个人都能感受到人工智能的魅力。
+  </p>
+  
+  <LatestPosts />
+</Default>

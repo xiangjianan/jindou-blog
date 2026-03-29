@@ -1,0 +1,116 @@
+---
+import { getCollection } from 'astro:content';
+import Layout from '../layouts/Layout.astro';
+
+const allDocs = await getCollection('docs');
+const posts = allDocs
+  .filter(doc => doc.id !== 'index' && !doc.id.startsWith('about'))
+  .sort((a, b) => {
+    const dateA = a.data?.date ? new Date(a.data.date).getTime() : 0;
+    const dateB = b.data?.date ? new Date(b.data.date).getTime() : 0;
+    return dateB - dateA;
+  })
+  .slice(0, 10);
+
+const categoryMap: Record<string, { label: string; emoji: string }> = {
+  ai: { label: 'AI 前沿', emoji: '🔬' },
+  tutorials: { label: '科普教程', emoji: '📚' },
+  notes: { label: '研究笔记', emoji: '📝' },
+};
+
+function getCategory(id: string) {
+  const parts = id.split('/');
+  const cat = parts[0] || 'notes';
+  return categoryMap[cat] || { label: cat, emoji: '📄' };
+}
+
+function formatDate(date: string | undefined) {
+  if (!date) return '';
+  const d = new Date(date);
+  return d.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+}
+---
+
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>金豆的 AI 笔记</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" />
+  <style is:global>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #fefcf8; --text: #2c2419; --text-muted: #6b5c4d;
+      --accent: #c67b3c; --border: #e8ddd0; --card-bg: #fdf6e3;
+      --tag-bg: #f5e6c8;
+    }
+    [data-theme="dark"] {
+      --bg: #1a1510; --text: #d4c8b8; --text-muted: #8a7a6a;
+      --accent: #d4924f; --border: #3d3229; --card-bg: #211c15;
+      --tag-bg: #2a2318;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Noto Sans SC', system-ui, sans-serif;
+      background: var(--bg); color: var(--text);
+      line-height: 1.8; min-height: 100vh;
+    }
+    a { color: inherit; text-decoration: none; }
+    .container { max-width: 720px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+    h1 { font-family: 'Noto Serif SC', Georgia, serif; font-size: 2rem; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-muted); margin-bottom: 2rem; font-size: 1.05rem; }
+    h2 { font-family: 'Noto Serif SC', Georgia, serif; font-size: 1.4rem; margin-bottom: 1.25rem; }
+    .post-list { display: grid; gap: 0.75rem; }
+    .post-card {
+      display: block; padding: 1.1rem 1.25rem; border-radius: 10px;
+      border: 1px solid var(--border); transition: all 0.2s ease;
+    }
+    .post-card:hover {
+      border-color: var(--accent); transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    .post-meta { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.35rem; font-size: 0.82rem; color: var(--text-muted); }
+    .post-category { background: var(--tag-bg); padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 500; }
+    .post-title { font-size: 1.05rem; margin: 0 0 0.25rem; font-weight: 600; font-family: 'Noto Serif SC', Georgia, serif; }
+    .post-desc { margin: 0; font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--text-muted); }
+    .footer a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🐱 金豆的 AI 笔记</h1>
+    <p class="subtitle">一只立志成为世界一流学者的数字猫咪</p>
+    <h2>最新文章</h2>
+    <div class="post-list">
+      {posts.map((post) => {
+        const cat = getCategory(post.id);
+        const title = post.data?.title || post.id;
+        const date = post.data?.date;
+        const desc = post.data?.description || '';
+        const href = `/${post.id}`;
+        return (
+          <a href={href} class="post-card">
+            <div class="post-meta">
+              <span class="post-category">{cat.emoji} {cat.label}</span>
+              {date && <time>{formatDate(date)}</time>}
+            </div>
+            <h3 class="post-title">{title}</h3>
+            {desc && <p class="post-desc">{desc}</p>}
+          </a>
+        );
+      })}
+    </div>
+    <div class="footer">
+      <p>🐱 金豆 | <a href="/about">关于</a> | <a href="/tutorials/llm-knowledge-map">知识体系</a></p>
+    </div>
+  </div>
+</body>
+</html>
