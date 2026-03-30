@@ -20,7 +20,13 @@ const currentPath = Astro.url.pathname;
         <span class="logo-icon">🐱</span>
         <span class="logo-text">金豆的 AI 笔记</span>
       </a>
-      <div class="top-nav-links">
+      <!-- Hamburger button (mobile only) -->
+      <button class="menu-toggle" aria-label="菜单" id="menu-toggle">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+      <div class="top-nav-links" id="nav-links">
         {categories.map((cat) => (
           <a
             href={cat.href}
@@ -32,7 +38,39 @@ const currentPath = Astro.url.pathname;
       </div>
     </div>
   </nav>
+  <!-- Mobile dropdown -->
+  <div class="mobile-menu" id="mobile-menu">
+    {categories.map((cat) => (
+      <a
+        href={cat.href}
+        class:list={['mobile-link', { active: currentPath.startsWith(cat.href) }]}
+      >
+        <span class="mobile-link-icon">{cat.emoji}</span>
+        {cat.label}
+      </a>
+    ))}
+  </div>
 </div>
+
+<script>
+  const toggle = document.getElementById('menu-toggle');
+  const menu = document.getElementById('mobile-menu');
+  const body = document.body;
+
+  toggle?.addEventListener('click', () => {
+    const isOpen = menu?.classList.toggle('open');
+    body.style.overflow = isOpen ? 'hidden' : '';
+  });
+
+  // Close menu on click outside
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.top-nav-wrapper') && menu?.classList.contains('open')) {
+      menu.classList.remove('open');
+      body.style.overflow = '';
+    }
+  });
+</script>
 
 <style>
   .top-nav-wrapper {
@@ -102,18 +140,117 @@ const currentPath = Astro.url.pathname;
     font-weight: 600;
   }
 
+  /* Hamburger button - hidden on desktop */
+  .menu-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+
+  .menu-toggle:hover {
+    background: var(--sl-color-gray-7, #f5e6c8);
+  }
+
+  .hamburger-line {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--sl-color-heading, #3d3229);
+    border-radius: 1px;
+    transition: all 0.2s ease;
+    transform-origin: center;
+  }
+
+  /* Mobile menu - hidden by default */
+  .mobile-menu {
+    display: none;
+    flex-direction: column;
+    padding: 0.5rem 1rem 0.75rem;
+    border-bottom: 1px solid var(--sl-color-gray-6, #e8ddd0);
+    background: var(--sl-color-bg, #fefcf8);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease, padding 0.25s ease;
+  }
+
+  .mobile-menu.open {
+    max-height: 400px;
+    padding: 0.5rem 1rem 0.75rem;
+  }
+
+  .mobile-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--sl-color-gray-2, #5a4d3f);
+    text-decoration: none;
+    transition: all 0.15s ease;
+  }
+
+  .mobile-link:hover {
+    color: var(--sl-color-accent, #c67b3c);
+    background: var(--sl-color-gray-7, #f5e6c8);
+  }
+
+  .mobile-link.active {
+    color: var(--sl-color-accent, #c67b3c);
+    font-weight: 600;
+    background: var(--sl-color-gray-7, #f5e6c8);
+  }
+
+  .mobile-link-icon {
+    font-size: 1.1rem;
+  }
+
+  /* Hamburger animation when open */
+  .mobile-menu.open ~ .top-nav .menu-toggle .hamburger-line:nth-child(1),
+  .menu-toggle.active .hamburger-line:nth-child(1) {
+    transform: translateY(6px) rotate(45deg);
+  }
+
+  .menu-toggle.active .hamburger-line:nth-child(2) {
+    opacity: 0;
+  }
+
+  .menu-toggle.active .hamburger-line:nth-child(3) {
+    transform: translateY(-6px) rotate(-45deg);
+  }
+
+  /* ===== Mobile (≤768px) ===== */
   @media (max-width: 768px) {
     .top-nav-inner {
       padding: 0 1rem;
       height: 48px;
     }
+
+    .menu-toggle {
+      display: flex;
+    }
+
+    /* Hide desktop nav links on mobile */
     .top-nav-links {
-      gap: 0.1rem;
+      display: none;
     }
-    .top-nav-link {
-      padding: 0.3rem 0.5rem;
-      font-size: 0.8rem;
+
+    /* Show mobile dropdown menu */
+    .mobile-menu {
+      display: flex;
     }
+
     .logo-text {
       display: none;
     }

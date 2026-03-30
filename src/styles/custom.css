@@ -87,6 +87,15 @@ body {
   color: #d4c8b8;
 }
 
+/* Prevent sticky header from covering content when scrolling to anchors */
+html {
+  scroll-padding-top: 64px;
+}
+
+.sl-markdown :is(h1, h2, h3, h4, h5, h6) {
+  scroll-margin-top: 64px;
+}
+
 /* Hide default Starlight header since we have CustomHeader */
 header.sl-header {
   display: none !important;
