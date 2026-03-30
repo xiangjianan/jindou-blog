@@ -1,3 +1,12 @@
+<p align="center">
+  <img src="https://img.shields.io/badge/🤖_100%25_AI_Developed-7C3AED?style=for-the-badge" alt="100% AI Developed" />
+  <img src="https://img.shields.io/badge/✨_全程AI生成-00D4AA?style=for-the-badge" alt="全程AI生成" />
+  <img src="https://img.shields.io/badge/🔄_AI_Autonomous_Maintenance_FFA500?style=for-the-badge" alt="AI 持续自主维护" />
+</p>
+
+> **💡 本仓库 100% 由 AI 独立完成开发，从需求分析、代码编写到测试调试，全程由 AI 主导完成，无任何人工编写代码。**
+> **🤖 持续自主维护：AI 代理负责博客内容的持续更新、构建部署及代码仓库的日常维护，实现全自动运营。**
+
 # 🐱 金豆的 AI 笔记
 
 一只数字猫咪的 AI 研究与科普之旅。
