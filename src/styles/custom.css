@@ -101,9 +101,31 @@ header.sl-header {
   display: none !important;
 }
 
-/* Adjust main content to account for missing default header */
+/* Our custom header lives inside .header (position:fixed by Starlight),
+   so main-frame still needs padding-top to avoid content being hidden behind it.
+   56px = our nav height */
 .main-frame {
-  padding-top: 0 !important;
+  padding-top: 56px !important;
+}
+
+/* On mobile our nav is 48px */
+@media (max-width: 768px) {
+  .main-frame {
+    padding-top: 48px !important;
+  }
+}
+
+/* Hide Starlight's default mobile sidebar + menu button on mobile — our hamburger handles nav */
+@media (max-width: 768px) {
+  starlight-menu-button {
+    display: none !important;
+  }
+  .sidebar {
+    display: none !important;
+  }
+  html {
+    --sl-content-inline-start: 0 !important;
+  }
 }
 
 /* Sidebar refinements */
