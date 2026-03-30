@@ -1,31 +1,8 @@
 ---
-import type { Props } from '@astrojs/starlight/props';
 import Default from '@astrojs/starlight/Page';
 import MermaidScript from './MermaidScript.astro';
-
-const { frontmatter } = Astro.props;
-const publishDate = frontmatter.date
-  ? new Date(frontmatter.date).toLocaleDateString('zh-CN', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
-  : '';
 ---
 
 <Default {...Astro.props} />
-
-{publishDate && (
-  <style>
-    .publish-date {
-      text-align: center;
-      color: var(--sl-color-gray-3);
-      font-size: 0.875rem;
-      margin-top: -0.5rem;
-      margin-bottom: 2rem;
-    }
-  </style>
-  <p class="publish-date">{publishDate}</p>
-)}
 
 <MermaidScript />

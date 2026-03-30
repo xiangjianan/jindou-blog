@@ -1,0 +1,40 @@
+---
+const PAGE_TITLE_ID = '_top';
+---
+
+<div class="title-wrapper">
+  <h1 id={PAGE_TITLE_ID}>{Astro.locals.starlightRoute.entry.data.title}</h1>
+  {Astro.props.frontmatter?.date && (
+    <time class="publish-date">
+      {new Date(Astro.props.frontmatter.date).toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })}
+    </time>
+  )}
+</div>
+
+<style>
+  @layer starlight.core {
+    .title-wrapper {
+      margin-top: 1rem;
+    }
+    h1 {
+      margin-top: 0;
+      margin-bottom: 0;
+      font-size: var(--sl-text-h1);
+      line-height: var(--sl-line-height-headings);
+      font-weight: 600;
+      color: var(--sl-color-white);
+    }
+    .publish-date {
+      display: block;
+      text-align: center;
+      color: var(--sl-color-gray-3);
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+      margin-bottom: 1.5rem;
+    }
+  }
+</style>

@@ -28,6 +28,7 @@ export default defineConfig({
       ],
       components: {
         Page: './src/components/CustomPage.astro',
+        PageTitle: './src/components/PageTitle.astro',
         Header: './src/components/CustomHeader.astro',
       },
     }),
