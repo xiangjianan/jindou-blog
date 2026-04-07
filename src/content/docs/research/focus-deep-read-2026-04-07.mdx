@@ -1,0 +1,98 @@
+---
+title: "论文精读：Focus — 为什么注意力需要聚焦？"
+description: "仅用 0.1% 参数 retrofit，反超全注意力 PPL，推理 8.6× 加速。Focus 挑战了 Transformer 注意力的金标准假设。"
+date: 2026-04-07
+tags:
+  - 研究
+  - 论文精读
+  - Transformer
+  - 高效注意力
+  - 稀疏注意力
+---
+
+# 论文精读：Focus — 少即是多的注意力机制
+
+## 论文信息
+
+- **标题：** Why Attend to Everything? Focus is the Key
+- **作者：** Xing Chen, Ahmed Murtadha, Jin Li, Shuai Shao, Yasin Abbasi Yadkori, Guan Wang, Mingli Yuan, William Chen, Sen Song（Sapient & 清华大学）
+- **arXiv：** https://arxiv.org/abs/2604.03260
+- **领域：** Efficient Attention / Sparse Attention / Parameter-Efficient Adaptation
+
+## 核心问题
+
+自注意力（Self-Attention）是 Transformer 的基石，但其 O(n²) 复杂度随序列长度平方增长，是长上下文推理的核心瓶颈。现有高效注意力方法（Longformer、Performer、BigBird 等）试图低成本地重建完整注意力矩阵——但它们改变了注意力函数本身，因此无法直接 retrofit 到已预训练的模型上，否则会导致质量退化。
+
+更根本的问题：**每个 token 真的需要 attend 到每个其他 token 吗？**
+
+## 核心贡献
+
+1. **新范式：** 不再近似完整注意力，而是学习哪些 token 对真正重要。Focus 通过可学习 centroids 将 token 分配到 group，远距离注意力限制在同组 token 对之间，局部注意力保持全精度计算。
+2. **Retrofit 能力：** 所有模型权重冻结，仅训练 centroid 参数（少至 148K 参数），即可改善 domain perplexity 且下游 benchmark 零退化。**没有其他高效注意力方法能在 retrofit 场景下做到这一点。**
+3. **超越全注意力：** 在 GPT-2 124M 上，Focus 达到 30.3 PPL，反而优于全注意力的 31.4 PPL——**少 attention 反而更好**。
+4. **可解释性：** Sinkhorn normalization 强制平衡分组，学到的 group 自动发现可解释的语言学类别，无需监督。
+
+## 方法论
+
+### 架构设计
+
+- **可学习 centroids：** 每层维护 K 个 centroid 向量（routing dimension 仅 16 维），token 通过 dot product 被软分配到 group
+- **双模式注意力：**
+  - **局部窗口：** 全精度 softmax（保留预训练学到的局部模式）
+  - **远距离：** 仅计算同组 token 对之间的注意力（组内仍然用精确 softmax）
+- **Sinkhorn normalization：** 保证各组大小平衡，防止 collapse
+
+### 训练策略
+
+- **Retrofit 模式：** 冻结所有模型权重，仅训练 centroid（0.1% 参数量）
+- **From scratch 模式：** 7B 规模训练 2B tokens，同样超越全注意力基线
+
+### 推理加速
+
+- Top-k group membership 将软路由离散化为硬稀疏模式
+- K=4, top-k=2 时：2× 速度提升，PPL 从 42.8（预训练基线）降至 41.3
+- 拆分为两次 FlashAttention 调用：1M tokens 场景下 **8.6×** 实际加速，无需自定义 kernel
+
+## 实验结果
+
+| 场景 | Focus PPL | Full Attention PPL | 备注 |
+|------|-----------|-------------------|------|
+| GPT-2 124M retrofit | 30.3 | 31.4 | 超越全注意力 |
+| 7B from scratch (2B tokens) | 13.82 | 13.89 | 每个检查点都赢 |
+| 推理 top-k=2 (70B) | 41.3 | 42.8 | 2× 加速 + 更好质量 |
+| 跨架构验证 | ✅ | — | MHA/GQA/Interleaved/QK-norm |
+
+关键发现：
+
+- 不像 LoRA，centroid routing 保持 alignment（TruthfulQA 分数不降，LoRA 反而下降）
+- Routing dimension 仅需 16 维，远小于 hidden dimension
+- 与 Thin Keys 理论一致：选择哪些 token 相关比建模它们之间如何交互简单得多
+
+## 个人见解
+
+### 为什么这篇论文值得关注
+
+这篇论文的核心洞察极具启发性：**移除不相关的注意力对不是代价，而是收益。** 这挑战了"全密度注意力是金标准"的假设。如果去掉噪声反而提升质量，那说明现有 Transformer 的注意力模式里存在大量无效甚至有害的计算。
+
+### 批判性思考
+
+1. **"少即是多"的边界：** 论文在 PG-19 这种长文本 domain 上效果显著，但短序列（如分类任务）中注意力噪声本身可能不严重。论文提到下游 benchmark 零退化，但没有展示下游任务是否也能超越——如果只是持平，那收益主要在推理效率端。
+
+2. **Group 数量的 trade-off：** K=4 是论文的默认值，但这个超参数对不同任务/模型的最优值可能差异很大。Sinkhorn normalization 虽然强制平衡，但语言学上不相关的 token 被迫分到同一组时，是否反而引入噪声？论文没有充分讨论这个 failure case。
+
+3. **局部 vs 远距离的边界定义：** 局部窗口大小如何确定？论文中似乎将其作为固定超参数，但最优窗口大小可能随 layer 深度和任务类型变化。
+
+4. **与 MoE 的关系：** centroid routing 在概念上与 MoE 的 router 非常相似。作者在相关工作中提到了 MoE-inspired block routing，但没有直接对比 MoE router。两者在 token-to-expert vs token-to-group 路由上的差异值得更深入的分析。
+
+5. **8.6× 加速的实际意义：** 这个数字是在 1M token 极端场景下取得的，实际应用中上下文长度可能远小于此。在常见的 4K-128K 范围内的加速比是多少？这更实用但论文没有强调。
+
+### 未来方向
+
+- **动态 group 数量：** 不同 layer 使用不同 K 值，浅层可能需要更多 group（更多样化的 attention pattern），深层可能更少
+- **跨模态验证：** 在 vision 和 multimodal 模型上的效果如何？
+- **与 SSM/Mamba 的结合：** Focus 处理远距离注意力，SSM 处理真正的长程依赖，两者是否互补？
+- **理论分析：** 为什么去掉注意力对反而提升质量？是否存在信息论层面的解释？
+
+### 一句话总结
+
+Focus 用极小的参数代价（0.1%）给 Transformer 装上了"眼睛"——让它知道该看哪里，而不是对一切进行全量计算。这既是工程上的实用方案，也是对注意力机制本质的深刻反思。
