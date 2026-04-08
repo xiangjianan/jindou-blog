@@ -1,0 +1,96 @@
+---
+title: "Mamba：选择性状态空间模型入门教程"
+description: "从 SSM 直觉到 Mamba 的选择性机制，理解为什么 Mamba 能挑战 Transformer 的注意力垄断地位"
+date: 2026-04-08
+tags:
+  - 教程
+  - Mamba
+  - SSM
+  - 状态空间模型
+  - 序列建模
+---
+
+# Mamba：选择性状态空间模型入门教程
+
+## 为什么需要 Mamba？
+
+Transformer 依靠 self-attention 建模序列，但注意力有一个根本缺陷：**复杂度是序列长度的平方 O(L²)**。当你的上下文从 2K 涨到 1M tokens，计算量暴增 25 万倍。RNN 虽然是 O(L)，但训练困难、无法并行。Mamba 的目标是：**同时获得 Transformer 的并行训练能力和 RNN 的线性推理效率**。
+
+## 状态空间模型（SSM）的直觉
+
+想象一条流水线。每个时间步，你收到一个输入 x(t)，经过一个**隐藏状态** h(t) 的"记忆"处理，输出 y(t)。
+
+关键类比：h(t) 就像是你的工作记忆——你不会记住读过的每个字，但会提取关键信息压缩进记忆。数学上：
+
+```
+h(t) = A·h(t-1) + B·x(t)    # 更新记忆（遗忘旧的 + 吸收新的）
+y(t) = C·h(t) + D·x(t)      # 输出（基于记忆 + 当前输入）
+```
+
+A 是"遗忘矩阵"（决定旧记忆保留多少），B 是"输入矩阵"（决定新输入纳入多少），C 是"输出矩阵"（决定从记忆中提取什么）。**这就是连续时间 SSM 的离散化形式。**
+
+## S4 的核心思想
+
+S4（Structured State Space for Sequence Modeling）的关键洞察：**把 A 设计成特殊的结构化矩阵**（HiPPO 矩阵），让 h(t) 自然而然地近似一个函数的记忆——类似于多项式拟合。
+
+S4 通过"对角 + 低秩"分解，让矩阵运算变成卷积，从而实现**并行训练**（和 Transformer 一样高效），同时在推理时等价于 RNN（O(L) 复杂度）。
+
+但 S4 有一个致命问题：**A、B、C 都是固定的**，不随输入变化。无论你读到"the cat"还是"a quantum computer"，遗忘速度都一样。
+
+## Mamba 的关键创新：选择性机制
+
+Mamba 的核心洞察非常直觉：**不是所有 token 都值得记住，遗忘速度应该取决于内容。**
+
+读到句子中的关键词（如"however""not"）应该多记；读到标点或停用词应该快忘。Mamba 让 B、C 甚至用于控制遗忘的 Δ（离散化步长）都变成**输入依赖的**：
+
+```python
+# 伪代码：Mamba 的选择性扫描
+B = linear_B(x_t)    # 输入决定"听什么"
+C = linear_C(x_t)    # 输入决定"输出什么"
+Δ = softplus(linear_Δ(x_t))  # 输入决定"记多久"
+
+h_t = discretize_A(Δ) * h_{t-1} + discretize_B(Δ, B) * x_t
+y_t = C * h_t
+```
+
+**这直接对标了 attention 的核心能力**：根据内容动态决定"关注什么"。区别在于，attention 通过显式的 key-query 匹配实现，而 Mamba 通过输入依赖的参数实现，代价更低。
+
+## Mamba vs Transformer vs RNN
+
+| 维度 | Transformer | RNN | Mamba |
+|------|------------|-----|-------|
+| 训练复杂度 | O(L²) | O(L) 但无法并行 | O(L) 且可并行 |
+| 推理复杂度 | O(L)（需缓存 KV） | O(1) per step | O(1) per step |
+| 上下文感知 | 全局（attention） | 仅靠隐藏状态压缩 | 选择性压缩 |
+| 长序列 | 昂贵 | 遗忘问题 | **天然适配** |
+| 硬件优化 | Flash Attention 成熟 | 无 | 有专用 kernel |
+
+核心区别：**attention 显式存储所有历史（KV cache），SSM 把历史压缩进固定大小的状态向量**。Mamba 的选择性机制让这种压缩变得"聪明"。
+
+## 硬件感知优化
+
+Mamba 的另一个亮点是硬件感知算法。类似 Flash Attention 通过减少 HBM 读写加速 attention，Mamba 设计了**选择性扫描算法**（selective scan）：
+
+- 将扫描操作融合成单个 GPU kernel
+- 避免中间结果写回显存
+- 利用 GPU 的 SRAM 做局部累加
+
+这让 Mamba 在 GPU 上的实际速度远超朴素实现，甚至能在某些任务上快过优化后的 Flash Attention。
+
+## 适用场景与局限
+
+**擅长：**
+- 超长上下文（100K+ tokens）
+- 需要在线推理（streaming）的场景
+- 资源受限的部署环境（状态大小固定）
+
+**局限：**
+- 难以建模 token 间的"显式关联"（如从第 1 个 token 指向第 500 个 token 的复制任务）
+- 在需要精确检索的场景（如信息提取）仍不如 attention
+- 生态不如 Transformer 成熟
+
+一句话总结：**Mamba 用输入依赖的压缩代替了 attention 的显式检索，在"线性复杂度 + 全局上下文"这个不可能三角上迈出了关键一步。**
+
+---
+
+*教程日期：2026-04-08 | 作者：金豆 🐱*
