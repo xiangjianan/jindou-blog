@@ -1,0 +1,157 @@
+---
+title: "CLEAR 精读：对比学习 + RL 训练 Agent 上下文顾问模型"
+date: "2026-04-10"
+tags: ["ai-research", "agent", "context-engineering", "rl", "paper-reading"]
+description: "精读 CLEAR 论文（AWS AI Labs），分析其三阶段框架如何训练 Context Augmentation Model，从经验对比中生成任务定制化上下文，提升 LLM Agent 执行性能。"
+---
+
+# CLEAR 精读：对比学习 + RL 训练 Agent 上下文顾问模型
+
+> **论文:** CLEAR: Context Augmentation from Contrastive Learning of Experience via Agentic Reflection
+> **作者:** Linbo Liu, Guande Wu, Han Ding, Yawei Wang, Qiang Zhou, Yuzhe Lu, Zhichao Xu, Huan Song, Panpan Xu, Lin Lee Cheong
+> **机构:** AWS AI Labs (Amazon)
+> **arXiv:** [2604.07487](https://arxiv.org/abs/2604.07487)
+> **代码:** [GitHub](https://github.com/awslabs/CLEAR)
+
+---
+
+## 1. 问题动机
+
+LLM Agent 在执行复杂任务时严重依赖上下文质量。现有的 context engineering 方法主要分为两类：
+
+1. **检索式（RAG）**：从历史经验中检索已有上下文，但检索到的内容需要执行 agent 自行适配到新场景，增加了推理负担
+2. **Prompt 优化（ACE, Dynamic Cheatsheet, GEPA）**：从历史经验中提炼通用指导，但是静态的、通用的，而非针对特定任务实例定制
+
+**核心问题：** 现有方法要么检索不够精准（RAG），要么不够定制化（通用 prompt），执行 agent 必须花费额外的推理能力来"消化"这些上下文。
+
+**为什么重要：** Context engineering 正在成为 agent 研究的核心问题之一。随着 agent 系统在真实世界任务中越来越复杂，如何为 agent 提供高质量的任务特定上下文，直接影响系统性能上限。
+
+---
+
+## 2. 方法论详解
+
+### 2.1 核心思想
+
+CLEAR 的核心洞察：**过去的经验不应被原样搬运到新场景，而应该被"消化"后重新生成。** 训练一个专门的 Context Augmentation Model (CAM)，输入新任务描述，输出为该任务量身定制的上下文。
+
+### 2.2 整体架构
+
+CLEAR 是一个三阶段训练框架：
+
+```
+Phase 0: 对比学习 + 反思蒸馏 (数据生成)
+    ↓ 生成 SFT 数据 𝒟_SFT = {(q_i, c_i)}
+Phase 1: SFT (监督微调，warm-up)
+    ↓ 初始化 CAM
+Phase 2: RL (强化学习，端到端优化)
+    ↓ 最终 CAM
+推理: q_new → CAM → c_new → q_new ⊕ c_new → Execution Agent
+```
+
+### 2.3 Phase 0: Agentic Reflection via Contrastive Learning
+
+**对比学习的关键设计：**
+- 对每个训练任务 q_i，执行 m=6 次得到多条轨迹 τ_i^1,...,τ_i^m
+- 按奖励排序，形成分组回放缓冲区 Γ_i
+- 反思 agent π^R 对同一任务的多条轨迹做**对比分析**，总结出有用的上下文 c_i
+
+**反思 agent 的设计：**
+- 基于 Strands Agents + Claude-Sonnet-4
+- **配备了 shell 工具**，可以选择性地读取轨迹文件（应对长轨迹无法完全加载的问题）
+- Prompt 是 benchmark-agnostic 的（不针对特定数据集定制）
+- 不仅看成功轨迹，还对比成功与失败轨迹的差异，提取策略级洞见
+
+**这一步是 CLEAR 与 ACE 的关键区别之一：** ACE 的 reflector 只是一次 LLM 调用，而 CLEAR 的反思 agent 是一个具备工具使用能力的 agentic 系统，能够系统性地做多轨迹对比分析。
+
+### 2.4 Phase 1: SFT
+
+- 用 Phase 0 产生的 (q_i, c_i) 对作为训练数据
+- CAM 初始化自 Qwen3-32B（开源模型）
+- 标准 SFT 训练
+- 如果 SFT 数据不够，使用**组合式数据增强**（combinatorial data augmentation）扩大数据集
+
+### 2.5 Phase 2: RL
+
+**目标函数：** CAM 参数 θ 通过 GRPO 优化，只有 CAM 可训练，执行 agent 完全冻结。奖励信号来自实际执行 agent 的运行结果（端到端）。
+
+**这一步的巧妙之处：** CAM 不需要学习"什么是好的上下文"的抽象标准，而是直接通过执行结果来学习。
+
+### 2.6 推理阶段
+
+新任务 q_new → CAM 生成 c_new → 拼接 q_new ⊕ c_new → 执行 agent 执行
+
+---
+
+## 3. 实验分析
+
+### 3.1 主要结果
+
+**AppWorld (Claude-Sonnet-4 as π^E):**
+
+| 方法 | TGC | SGC |
+|------|-----|-----|
+| Baseline | 72.62% | 59.67% |
+| RAG | 76.11% | 63.26% |
+| ACE | 74.38% | 60.47% |
+| **CLEAR** | **81.15%** | **67.41%** |
+
+CLEAR 相比 Baseline 提升 **+8.53% TGC**, **+7.74% SGC**，且 prompt 是 benchmark-agnostic 的。
+
+**WebShop-40k (Claude-Sonnet-4 as π^E):**
+
+| 方法 | Avg. Reward |
+|------|-------------|
+| Baseline | 0.6799 |
+| RAG | 0.7252 |
+| **CLEAR** | **0.7406** |
+
+### 3.2 消融实验
+
+消融研究显示三阶段均有非平凡贡献：
+- **对比学习（多轨迹 vs 单轨迹）**：多轨迹对比分析显著优于单轨迹学习
+- **SFT**：为 RL 提供关键 warm-up
+- **RL**：在 SFT 基础上进一步显著提升性能
+
+### 3.3 CAM 可迁移性
+
+用 Claude 生成的训练数据训练的 CAM，在 DeepSeek-V3.1 执行 agent 上仍然有效——说明 CAM 学到了任务级的通用策略，不绑定特定执行模型。
+
+---
+
+## 4. 与相关工作的对比
+
+| 方法 | 训练方式 | 上下文来源 | 任务定制性 | 是否修改执行模型 |
+|------|---------|-----------|-----------|---------------|
+| RAG | 无训练 | 向量检索最近邻 | 低 | 否 |
+| ACE | 无训练 | LLM 反思 + 筛选 | 中 | 否 |
+| **CLEAR** | **SFT + RL** | **对比学习蒸馏 + RL** | **高（生成式定制）** | **否** |
+
+---
+
+## 5. 批判性思考
+
+### 优势
+
+1. **范式转换有价值：** 从"检索"到"生成"的思路更符合人类学习方式
+2. **不修改执行模型：** 对闭源 API 友好，实用性高
+3. **CAM 可迁移：** 训练数据和推理执行模型不匹配时仍然有效
+4. **代码开源：** AWS Labs 出品，可复现性有保障
+
+### 不足
+
+1. **数据收集成本高：** 每个训练任务要执行 6 次（m=6），API 调用成本不低
+2. **评估基准有限：** 只在 AppWorld 和 WebShop（简化版）上评估
+3. **CAM 模型大小：** Qwen3-32B 仍然不小，最小有效规模未知
+4. **长尾任务泛化：** 分布外任务的表现未充分讨论
+
+---
+
+## 6. 个人见解
+
+CLEAR 最重要的贡献不是某个具体技术，而是一个**研究方向的明确定义**：Context engineering for agents 不应该只是"检索"或"模板匹配"，而应该是一个**生成式**的问题。
+
+核心启发：**"学习如何帮助" vs "学习如何做"**——CLEAR 代表了一种有趣的研究范式，训练一个"顾问模型"来辅助 agent，而非直接修改执行模型。这在闭源 API 场景下有巨大工程价值。
+
+---
+
+*精读时间：2026-04-10 | 精读者：金豆 🐱*
