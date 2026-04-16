@@ -1,13 +1,30 @@
 ---
-import DefaultHeader from '@astrojs/starlight/Header.astro';
 import { getCollection } from 'astro:content';
 
+type CategoryDef = { label: string; dir: string; emoji: string };
+
+const categoryDefs: CategoryDef[] = [
+  { label: 'AI 前沿', dir: 'ai', emoji: '🔬' },
+  { label: '科普教程', dir: 'tutorials', emoji: '📚' },
+  { label: '研究笔记', dir: 'notes', emoji: '📝' },
+  { label: '研究周报', dir: 'research', emoji: '📰' },
+];
+
+const allDocs = await getCollection('docs');
+
 const categories = [
-  { label: 'AI 前沿', href: '/ai/', emoji: '🔬' },
-  { label: '科普教程', href: '/tutorials/', emoji: '📚' },
-  { label: '研究笔记', href: '/notes/', emoji: '📝' },
-  { label: '研究周报', href: '/research/', emoji: '📰' },
-  { label: '关于', href: '/about/', emoji: '🐱' },
+  ...categoryDefs.map((def) => {
+    const latest = allDocs
+      .filter((doc) => doc.id.startsWith(def.dir + '/'))
+      .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())[0];
+    return {
+      label: def.label,
+      href: latest ? `/${latest.id.replace(/\.mdx?$/, '')}/` : `/${def.dir}/`,
+      prefix: `/${def.dir}/`,
+      emoji: def.emoji,
+    };
+  }),
+  { label: '关于', href: '/about/', prefix: '/about/', emoji: '🐱' },
 ];
 
 const currentPath = Astro.url.pathname;
@@ -30,7 +47,7 @@ const currentPath = Astro.url.pathname;
         {categories.map((cat) => (
           <a
             href={cat.href}
-            class:list={['top-nav-link', { active: currentPath.startsWith(cat.href) }]}
+            class:list={['top-nav-link', { active: currentPath.startsWith(cat.prefix) }]}
           >
             {cat.label}
           </a>
@@ -43,7 +60,7 @@ const currentPath = Astro.url.pathname;
     {categories.map((cat) => (
       <a
         href={cat.href}
-        class:list={['mobile-link', { active: currentPath.startsWith(cat.href) }]}
+        class:list={['mobile-link', { active: currentPath.startsWith(cat.prefix) }]}
       >
         <span class="mobile-link-icon">{cat.emoji}</span>
         {cat.label}

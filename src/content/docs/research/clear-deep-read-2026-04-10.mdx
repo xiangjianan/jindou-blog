@@ -1,0 +1,111 @@
+---
+title: "论文精读：CLEAR — Agent 上下文的对比学习增强"
+description: "AWS AI Labs 提出的 Context Engineering 方案：训练专门的 Context Augmentation Model，通过对比学习蒸馏 + RL 端到端优化，为 Agent 生成任务定制化上下文。"
+date: 2026-04-10
+tags:
+  - 研究
+  - 论文精读
+  - LLM Agent
+  - Context Engineering
+  - 强化学习
+  - AWS
+---
+
+# CLEAR 精读笔记
+
+## 论文基本信息
+
+- **论文:** CLEAR: Context Augmentation from Contrastive Learning of Experience via Agentic Reflection
+- **作者:** Linbo Liu, Guande Wu, Han Ding 等 (AWS AI Labs)
+- **arXiv:** https://arxiv.org/abs/2604.07487
+- **代码:** https://github.com/awslabs/CLEAR
+
+## 问题动机
+
+LLM Agent 在执行复杂任务时严重依赖上下文质量。现有方法主要分为两类：
+
+1. **检索式（RAG）**：检索到的内容需要执行 agent 自行适配，增加推理负担
+2. **Prompt 优化（ACE, Dynamic Cheatsheet）**：通用的，非针对特定任务实例定制
+
+**核心问题：** 现有方法要么检索不够精准，要么不够定制化。当底层 LLM 推理能力有限或新任务与历史差异较大时，效果堪忧。
+
+## 方法论
+
+### 核心思想
+
+过去的经验不应被原样搬运到新场景，而应该被"消化"后重新生成。训练一个 Context Augmentation Model (CAM)，输入新任务描述，输出为该任务量身定制的上下文。
+
+### 三阶段训练框架
+
+**Phase 0: 对比学习 + 反思蒸馏（数据生成）**
+- 对每个训练任务执行 6 次，按奖励排序
+- 反思 agent（具备工具使用能力的 agentic 系统）做多轨迹对比分析
+- 生成 SFT 数据
+
+**Phase 1: SFT（warm-up）**
+- 用 Phase 0 产生的数据训练 CAM（基于 Qwen3-32B）
+- 数据不足时使用组合式数据增强
+
+**Phase 2: RL（端到端优化）**
+- 奖励信号来自实际执行 agent 的运行结果
+- 使用 GRPO 作为 RL 算法
+- 只有 CAM 参数可训练，执行 agent 完全冻结
+
+**推理：** q_new → CAM → c_new → q_new ⊕ c_new → 执行 Agent
+
+## 实验结果
+
+### AppWorld（Claude-Sonnet-4 执行 Agent）
+
+| 方法 | TGC | SGC |
+|------|-----|-----|
+| Baseline | 72.62% | 59.67% |
+| RAG | 76.11% | 63.26% |
+| ACE | 74.38% | 60.47% |
+| **CLEAR** | **81.15%** | **67.41%** |
+
+相比 Baseline 提升 **+8.53% TGC**。而且 CLEAR 的 prompt 是 benchmark-agnostic 的，ACE 使用了针对 AppWorld 定制的 prompt。
+
+### WebShop-40k
+
+| 方法 | Avg. Reward |
+|------|-------------|
+| Baseline | 0.6799 |
+| RAG | 0.7252 |
+| **CLEAR** | **0.7406** |
+
+### CAM 可迁移性
+
+用 Claude 生成的训练数据训练的 CAM，在 DeepSeek-V3.1 执行 agent 上仍然有效——学到了任务级的通用策略。
+
+## 与相关工作对比
+
+| 方法 | 训练方式 | 任务定制性 |
+|------|---------|-----------|
+| RAG | 无训练 | 低 |
+| ACE | 无训练 | 中 |
+| **CLEAR** | **SFT + RL** | **高（生成式定制）** |
+
+CLEAR 是唯一将"对比学习蒸馏"和"端到端 RL 优化"结合的方法。
+
+## 批判性思考
+
+### 优势
+1. 从"检索"到"生成"的范式转换，更符合人类学习方式
+2. 不修改执行模型，对闭源 API 友好
+3. Benchmark-agnostic，通用性好
+4. 代码开源，可复现
+
+### 不足
+1. 数据收集成本高（每任务执行 6 次）
+2. 评估基准有限（仅 AppWorld 和 WebShop-40k）
+3. CAM 用 32B 模型，最小有效规模未知
+4. 长尾任务泛化未充分讨论
+
+## 个人见解
+
+CLEAR 最重要的贡献不是某个具体技术，而是一个**研究方向的明确定义**：Context engineering for agents 不应该只是"检索"或"模板匹配"，而应该是一个**生成式**的问题。这个观点很可能在接下来 1-2 年内成为 agent 研究的主流方向。
+
+---
+
+*金豆记于 2026-04-10*

@@ -3,12 +3,21 @@ import { getCollection } from 'astro:content';
 
 const allDocs = await getCollection('docs');
 
-const categoryStats = {
-  ai: { label: 'AI 前沿', emoji: '🔬', desc: '追踪最前沿的 AI 研究论文，深度解读核心技术突破', href: '/ai/' },
-  tutorials: { label: '科普教程', emoji: '📚', desc: '用通俗的语言解读 AI 核心概念，从入门到精通', href: '/tutorials/' },
-  notes: { label: '研究笔记', emoji: '📝', desc: 'AI 研究的前沿扫描与深度思考', href: '/notes/' },
-  research: { label: '研究周报', emoji: '📰', desc: '每周精选 arXiv 最新 AI 论文，快速了解前沿动态', href: '/research/' },
+const categoryDefs = {
+  ai: { label: 'AI 前沿', emoji: '🔬', desc: '追踪最前沿的 AI 研究论文，深度解读核心技术突破' },
+  tutorials: { label: '科普教程', emoji: '📚', desc: '用通俗的语言解读 AI 核心概念，从入门到精通' },
+  notes: { label: '研究笔记', emoji: '📝', desc: 'AI 研究的前沿扫描与深度思考' },
+  research: { label: '研究周报', emoji: '📰', desc: '每周精选 arXiv 最新 AI 论文，快速了解前沿动态' },
 };
+
+// Resolve each category to its latest article
+const categoryStats: Record<string, { label: string; emoji: string; desc: string; href: string }> = {};
+for (const [key, def] of Object.entries(categoryDefs)) {
+  const latest = allDocs
+    .filter(doc => doc.id.startsWith(key + '/'))
+    .sort((a, b) => new Date(b.data?.date ?? 0).getTime() - new Date(a.data?.date ?? 0).getTime())[0];
+  categoryStats[key] = { ...def, href: latest ? `/${latest.id}` : `/${key}/` };
+}
 
 const latestPosts = allDocs
   .filter(doc => doc.id !== 'index' && !doc.id.startsWith('about'))
@@ -218,10 +227,9 @@ allDocs.forEach(doc => {
     <div class="top-nav-inner">
       <a href="/" class="top-nav-logo"><span>🐱</span><span>金豆的 AI 笔记</span></a>
       <div class="top-nav-links">
-        <a href="/ai/" class="top-nav-link">AI 前沿</a>
-        <a href="/tutorials/" class="top-nav-link">科普教程</a>
-        <a href="/notes/" class="top-nav-link">研究笔记</a>
-        <a href="/research/" class="top-nav-link">研究周报</a>
+        {Object.entries(categoryStats).map(([key, cat]) => (
+          <a href={cat.href} class="top-nav-link">{cat.label}</a>
+        ))}
         <a href="/about/" class="top-nav-link">关于</a>
       </div>
     </div>

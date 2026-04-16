@@ -6,3 +6,20 @@ import MermaidScript from './MermaidScript.astro';
 <Default {...Astro.props} />
 
 <MermaidScript />
+
+<script>
+  function scrollSidebarToActive() {
+    const active = document.querySelector('.sidebar-pane a[aria-current="page"]');
+    if (!active) return;
+    const pane = document.getElementById('starlight__sidebar');
+    if (!pane) return;
+    const paneRect = pane.getBoundingClientRect();
+    const activeRect = active.getBoundingClientRect();
+    const offset = activeRect.top - paneRect.top + pane.scrollTop - pane.clientHeight / 2 + activeRect.height / 2;
+    pane.scrollTo({ top: Math.max(0, offset), behavior: 'instant' });
+  }
+
+  setTimeout(scrollSidebarToActive, 150);
+  document.addEventListener('astro:after-swap', () => setTimeout(scrollSidebarToActive, 150));
+  document.addEventListener('astro:page-load', () => setTimeout(scrollSidebarToActive, 150));
+</script>
