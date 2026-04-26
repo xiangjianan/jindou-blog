@@ -1,0 +1,54 @@
+---
+import { getCollection } from 'astro:content';
+import StandaloneLayout from './StandaloneLayout.astro';
+
+type Props = {
+  slug: 'ai' | 'tutorials' | 'notes' | 'research';
+  title: string;
+  description: string;
+};
+
+const { slug, title, description } = Astro.props;
+const allDocs = await getCollection('docs');
+const posts = allDocs
+  .filter((doc) => doc.id.startsWith(`${slug}/`))
+  .sort((a, b) => {
+    const dateA = a.data.date ? new Date(a.data.date).getTime() : 0;
+    const dateB = b.data.date ? new Date(b.data.date).getTime() : 0;
+    return dateB - dateA;
+  });
+
+function formatDate(date: Date | string | undefined) {
+  if (!date) return '';
+  return new Date(date).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+}
+---
+
+<StandaloneLayout title={title} description={description}>
+  <div class="breadcrumb"><a href="/">首页</a> / <span>{title}</span></div>
+
+  <header class="category-heading">
+    <div>
+      <h1>{title}</h1>
+      <p>{description}</p>
+    </div>
+    <span class="eyebrow">{posts.length} 篇文章</span>
+  </header>
+
+  <section class="post-index" aria-label={`${title}文章列表`}>
+    {posts.map((post) => (
+      <a href={`/${post.id}/`} class="post-row">
+        <div class="post-meta">
+          {post.data.date && <time>{formatDate(post.data.date)}</time>}
+          {post.data.tags?.slice(0, 3).map((tag: string) => <span class="tag">{tag}</span>)}
+        </div>
+        <h3>{post.data.title}</h3>
+        {post.data.description && <p class="post-desc">{post.data.description}</p>}
+      </a>
+    ))}
+  </section>
+</StandaloneLayout>
