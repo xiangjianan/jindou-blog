@@ -1,258 +1,695 @@
 ---
-import DefaultHeader from '@astrojs/starlight/Header.astro';
 import { getCollection } from 'astro:content';
 
-const categories = [
-  { label: 'AI 前沿', href: '/ai/', emoji: '🔬' },
-  { label: '科普教程', href: '/tutorials/', emoji: '📚' },
-  { label: '研究笔记', href: '/notes/', emoji: '📝' },
-  { label: '研究周报', href: '/research/', emoji: '📰' },
-  { label: '关于', href: '/about/', emoji: '🐱' },
+type CategoryDef = {
+  label: string;
+  href: string;
+  prefix: string;
+  description: string;
+};
+
+const categories: CategoryDef[] = [
+  { label: 'AI 前沿', href: '/ai/', prefix: '/ai/', description: '论文精读与前沿解读' },
+  { label: '科普教程', href: '/tutorials/', prefix: '/tutorials/', description: '概念、机制与实践' },
+  { label: '研究笔记', href: '/notes/', prefix: '/notes/', description: '想法、扫描与备忘' },
+  { label: '研究周报', href: '/research/', prefix: '/research/', description: 'arXiv 与论文速览' },
+  { label: '关于', href: '/about/', prefix: '/about/', description: '作者与站点说明' },
 ];
 
+const categoryLabels = new Map([
+  ['ai', 'AI 前沿'],
+  ['tutorials', '科普教程'],
+  ['notes', '研究笔记'],
+  ['research', '研究周报'],
+]);
+
 const currentPath = Astro.url.pathname;
+const docs = await getCollection('docs');
+
+function toHref(id: string) {
+  if (id === 'index') return '/';
+  return `/${id.replace(/\/index$/, '')}/`;
+}
+
+function getSection(id: string) {
+  const firstSegment = id.split('/')[0];
+  if (id === 'about') return '关于';
+  return categoryLabels.get(firstSegment) ?? '文章';
+}
+
+function formatDate(date: Date | string | undefined) {
+  if (!date) return '';
+  return new Date(date).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+}
+
+const searchItems = docs
+  .filter((doc) => doc.id !== 'index')
+  .map((doc) => ({
+    title: doc.data.title,
+    description: doc.data.description ?? '',
+    href: toHref(doc.id),
+    section: getSection(doc.id),
+    date: formatDate(doc.data.date),
+    tags: doc.data.tags ?? [],
+  }))
+  .sort((a, b) => (a.date < b.date ? 1 : -1));
 ---
 
-<div class="top-nav-wrapper">
-  <nav class="top-nav">
-    <div class="top-nav-inner">
-      <a href="/" class="top-nav-logo">
-        <span class="logo-icon">🐱</span>
-        <span class="logo-text">金豆的 AI 笔记</span>
-      </a>
-      <!-- Hamburger button (mobile only) -->
-      <button class="menu-toggle" aria-label="菜单" id="menu-toggle">
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
+<div class="docs-header-wrap" data-docs-header>
+  <nav class="docs-header-nav" aria-label="主导航">
+    <a href="/" class="brand-link" aria-label="金豆的 AI 笔记首页">
+      <img class="brand-mark" src="/logo.svg" alt="" width="32" height="32" />
+      <span class="brand-copy">
+        <span class="brand-name">金豆的 AI 笔记</span>
+        <span class="brand-subtitle">AI research notes</span>
+      </span>
+    </a>
+
+    <div class="desktop-nav" aria-label="分类">
+      {categories.map((cat) => (
+        <a
+          href={cat.href}
+          class:list={['nav-link', { active: currentPath === cat.href || currentPath.startsWith(cat.prefix) }]}
+        >
+          {cat.label}
+        </a>
+      ))}
+    </div>
+
+    <div class="header-tools">
+      <button type="button" class="search-trigger" data-search-open aria-label="搜索文章" aria-keyshortcuts="Meta+K Control+K">
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path d="m20.4 20.4-4.5-4.5m2.1-5.4a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" />
+        </svg>
+        <span class="search-label">搜索</span>
+        <kbd class="shortcut" data-search-shortcut>⌘K</kbd>
       </button>
-      <div class="top-nav-links" id="nav-links">
-        {categories.map((cat) => (
-          <a
-            href={cat.href}
-            class:list={['top-nav-link', { active: currentPath.startsWith(cat.href) }]}
-          >
-            {cat.label}
-          </a>
-        ))}
-      </div>
+
+      <button type="button" class="icon-button theme-toggle" data-theme-toggle aria-label="切换明暗主题" title="切换明暗主题">
+        <svg class="theme-icon theme-icon-sun" aria-hidden="true" viewBox="0 0 24 24">
+          <path d="M12 4V2m0 20v-2m5.66-13.66 1.41-1.41M4.93 19.07l1.41-1.41M20 12h2M2 12h2m13.66 5.66 1.41 1.41M4.93 4.93l1.41 1.41M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" />
+        </svg>
+        <svg class="theme-icon theme-icon-moon" aria-hidden="true" viewBox="0 0 24 24">
+          <path d="M21 14.2A8.5 8.5 0 0 1 9.8 3a7 7 0 1 0 11.2 11.2Z" />
+        </svg>
+      </button>
+
+      <button type="button" class="icon-button mobile-nav-toggle" data-mobile-nav-toggle aria-label="打开分类导航" aria-expanded="false" aria-controls="site-mobile-nav">
+        <svg aria-hidden="true" viewBox="0 0 24 24">
+          <path d="M4 7h16M4 12h16M4 17h16" />
+        </svg>
+      </button>
     </div>
   </nav>
-  <!-- Mobile dropdown -->
-  <div class="mobile-menu" id="mobile-menu">
+
+  <div class="mobile-nav-panel" id="site-mobile-nav" data-mobile-nav hidden>
     {categories.map((cat) => (
       <a
         href={cat.href}
-        class:list={['mobile-link', { active: currentPath.startsWith(cat.href) }]}
+        class:list={['mobile-nav-link', { active: currentPath === cat.href || currentPath.startsWith(cat.prefix) }]}
       >
-        <span class="mobile-link-icon">{cat.emoji}</span>
-        {cat.label}
+        <span>{cat.label}</span>
+        <small>{cat.description}</small>
       </a>
     ))}
   </div>
 </div>
 
-<script>
-  const toggle = document.getElementById('menu-toggle');
-  const menu = document.getElementById('mobile-menu');
-  const body = document.body;
+<dialog class="site-search-dialog" data-search-dialog aria-label="站内搜索">
+  <div class="search-panel">
+    <div class="search-input-row">
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="m20.4 20.4-4.5-4.5m2.1-5.4a7.5 7.5 0 1 1-15 0 7.5 7.5 0 0 1 15 0Z" />
+      </svg>
+      <input data-search-input type="search" placeholder="搜索文章、标签或关键词..." autocomplete="off" />
+      <button type="button" data-search-close aria-label="关闭搜索">Esc</button>
+    </div>
+    <div class="search-hint">输入关键词后按 Enter 打开第一个结果。</div>
+    <div class="search-results" data-search-results></div>
+  </div>
+</dialog>
 
-  toggle?.addEventListener('click', () => {
-    const isOpen = menu?.classList.toggle('open');
-    body.style.overflow = isOpen ? 'hidden' : '';
+<script type="application/json" id="site-search-data" set:html={JSON.stringify(searchItems)} />
+
+<script is:inline>
+  (() => {
+    const storageKey = 'starlight-theme';
+    const getSystemTheme = () => (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const readTheme = () => {
+      const stored = localStorage.getItem(storageKey);
+      return stored === 'light' || stored === 'dark' ? stored : getSystemTheme();
+    };
+    const applyTheme = (theme) => {
+      document.documentElement.dataset.theme = theme;
+      document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+        button.dataset.theme = theme;
+        button.setAttribute('aria-label', theme === 'dark' ? '切换到浅色主题' : '切换到深色主题');
+        button.setAttribute('title', theme === 'dark' ? '切换到浅色主题' : '切换到深色主题');
+      });
+    };
+    applyTheme(readTheme());
+
+    document.querySelectorAll('[data-theme-toggle]').forEach((button) => {
+      if (button.dataset.bound === 'true') return;
+      button.dataset.bound = 'true';
+      button.addEventListener('click', () => {
+        const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        localStorage.setItem(storageKey, next);
+        applyTheme(next);
+      });
+    });
+
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      const stored = localStorage.getItem(storageKey);
+      if (stored !== 'light' && stored !== 'dark') applyTheme(getSystemTheme());
+    });
+  })();
+</script>
+
+<script>
+  type SearchItem = {
+    title: string;
+    description: string;
+    href: string;
+    section: string;
+    date: string;
+    tags: string[];
+  };
+
+  const searchDataScript = document.getElementById('site-search-data');
+  const searchItems: SearchItem[] = searchDataScript?.textContent ? JSON.parse(searchDataScript.textContent) : [];
+  const searchDialog = document.querySelector<HTMLDialogElement>('[data-search-dialog]');
+  const searchInput = document.querySelector<HTMLInputElement>('[data-search-input]');
+  const searchResults = document.querySelector<HTMLElement>('[data-search-results]');
+  const mobileToggle = document.querySelector<HTMLButtonElement>('[data-mobile-nav-toggle]');
+  const mobilePanel = document.querySelector<HTMLElement>('[data-mobile-nav]');
+
+  const isApple = /(Mac|iPhone|iPod|iPad)/i.test(navigator.platform);
+  document.querySelectorAll<HTMLElement>('[data-search-shortcut]').forEach((shortcut) => {
+    shortcut.textContent = isApple ? '⌘K' : 'Ctrl K';
   });
 
-  // Close menu on click outside
-  document.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    if (!target.closest('.top-nav-wrapper') && menu?.classList.contains('open')) {
-      menu.classList.remove('open');
-      body.style.overflow = '';
+  const normalize = (value: string) => value.toLowerCase().trim();
+  const getHaystack = (item: SearchItem) =>
+    normalize(`${item.title} ${item.description} ${item.section} ${item.tags.join(' ')}`);
+
+  function pickResults(query: string) {
+    const normalizedQuery = normalize(query);
+    if (!normalizedQuery) return searchItems.slice(0, 8);
+    const tokens = normalizedQuery.split(/\s+/).filter(Boolean);
+    return searchItems
+      .map((item) => {
+        const haystack = getHaystack(item);
+        const title = normalize(item.title);
+        const score = tokens.reduce((total, token) => {
+          if (title.includes(token)) return total + 5;
+          if (haystack.includes(token)) return total + 2;
+          return total;
+        }, 0);
+        return { item, score };
+      })
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10)
+      .map((entry) => entry.item);
+  }
+
+  function renderResults(query = '') {
+    if (!searchResults) return;
+    const results = pickResults(query);
+    searchResults.innerHTML = '';
+
+    if (results.length === 0) {
+      const empty = document.createElement('p');
+      empty.className = 'search-empty';
+      empty.textContent = '没有找到匹配的文章';
+      searchResults.append(empty);
+      return;
+    }
+
+    const list = document.createElement('div');
+    list.className = 'search-result-list';
+    results.forEach((item, index) => {
+      const link = document.createElement('a');
+      link.className = 'search-result';
+      link.href = item.href;
+      link.dataset.resultIndex = String(index);
+      link.innerHTML = `
+        <span class="result-meta">${item.section}${item.date ? ` · ${item.date}` : ''}</span>
+        <strong>${item.title}</strong>
+        ${item.description ? `<span class="result-description">${item.description}</span>` : ''}
+      `;
+      list.append(link);
+    });
+    searchResults.append(list);
+  }
+
+  function openSearch() {
+    if (!searchDialog) return;
+    if (!searchDialog.open) searchDialog.showModal();
+    renderResults(searchInput?.value ?? '');
+    requestAnimationFrame(() => searchInput?.focus());
+  }
+
+  function closeSearch() {
+    searchDialog?.close();
+  }
+
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (target instanceof Element && target.closest('[data-search-open]')) openSearch();
+  });
+
+  document.querySelector<HTMLButtonElement>('[data-search-close]')?.addEventListener('click', closeSearch);
+  searchInput?.addEventListener('input', () => renderResults(searchInput.value));
+  searchInput?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      const firstResult = searchResults?.querySelector<HTMLAnchorElement>('.search-result');
+      if (firstResult) window.location.href = firstResult.href;
     }
   });
+
+  searchDialog?.addEventListener('click', (event) => {
+    if (event.target === searchDialog) closeSearch();
+  });
+
+  window.addEventListener('keydown', (event) => {
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+      event.preventDefault();
+      searchDialog?.open ? closeSearch() : openSearch();
+    }
+    if (event.key === 'Escape' && mobilePanel && !mobilePanel.hidden) {
+      mobilePanel.hidden = true;
+      mobileToggle?.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  mobileToggle?.addEventListener('click', () => {
+    if (!mobilePanel) return;
+    const willOpen = mobilePanel.hidden;
+    mobilePanel.hidden = !willOpen;
+    mobileToggle.setAttribute('aria-expanded', String(willOpen));
+  });
+
+  renderResults();
 </script>
 
 <style>
-  .top-nav-wrapper {
+  .docs-header-wrap {
     position: sticky;
     top: 0;
-    z-index: 100;
-    border-bottom: 1px solid var(--sl-color-gray-6, #e8ddd0);
-    background: var(--sl-color-bg, #fefcf8);
-  }
-
-  .top-nav {
+    z-index: 40;
     width: 100%;
+    border-bottom: 1px solid var(--jd-border);
+    background: color-mix(in srgb, var(--jd-bg) 88%, transparent);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
   }
 
-  .top-nav-inner {
-    max-width: 1280px;
+  .docs-header-nav {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    height: var(--sl-nav-height, 4rem);
+    max-width: 1440px;
     margin: 0 auto;
-    padding: 0 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 56px;
+    padding: 0 1.25rem;
   }
 
-  .top-nav-logo {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    text-decoration: none;
-    color: var(--sl-color-heading, #3d3229);
-    font-weight: 700;
-    font-size: 1.1rem;
-    font-family: 'Noto Serif SC', Georgia, serif;
-    white-space: nowrap;
-  }
-
-  .logo-icon {
-    font-size: 1.4rem;
-  }
-
-  .top-nav-links {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-  }
-
-  .top-nav-link {
+  .brand-link {
     display: inline-flex;
     align-items: center;
-    padding: 0.4rem 0.85rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--sl-color-gray-2, #5a4d3f);
+    gap: 0.65rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    color: var(--jd-text);
     text-decoration: none;
-    transition: all 0.15s ease;
+  }
+
+  .brand-mark {
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 auto;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+  }
+
+  .brand-copy {
+    display: grid;
+    min-width: 0;
+    line-height: 1.1;
+  }
+
+  .brand-name {
+    overflow: hidden;
+    font-weight: 750;
+    font-size: 0.95rem;
+    letter-spacing: 0;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .top-nav-link:hover {
-    color: var(--sl-color-accent, #c67b3c);
-    background: var(--sl-color-gray-7, #f5e6c8);
+  .brand-subtitle {
+    margin-top: 0.12rem;
+    color: var(--jd-muted);
+    font-size: 0.68rem;
+    letter-spacing: 0;
+    text-transform: uppercase;
   }
 
-  .top-nav-link.active {
-    color: var(--sl-color-accent, #c67b3c);
-    font-weight: 600;
-  }
-
-  /* Hamburger button - hidden on desktop */
-  .menu-toggle {
+  .desktop-nav {
     display: none;
-    flex-direction: column;
-    justify-content: center;
     align-items: center;
-    gap: 4px;
-    width: 36px;
-    height: 36px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    padding: 0;
-    border-radius: 6px;
-    transition: background 0.15s;
+    gap: 0.2rem;
+    margin-inline-start: 0.5rem;
   }
 
-  .menu-toggle:hover {
-    background: var(--sl-color-gray-7, #f5e6c8);
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    height: 2rem;
+    padding: 0 0.7rem;
+    border-radius: 7px;
+    color: var(--jd-muted);
+    font-size: 0.88rem;
+    font-weight: 550;
+    text-decoration: none;
+    white-space: nowrap;
   }
 
-  .hamburger-line {
-    display: block;
-    width: 20px;
-    height: 2px;
-    background: var(--sl-color-heading, #3d3229);
-    border-radius: 1px;
-    transition: all 0.2s ease;
-    transform-origin: center;
+  .nav-link:hover,
+  .nav-link.active {
+    color: var(--jd-accent);
+    background: var(--jd-accent-soft);
   }
 
-  /* Mobile menu - hidden by default */
-  .mobile-menu {
-    display: none;
-    flex-direction: column;
-    padding: 0.5rem 1rem 0.75rem;
-    border-bottom: 1px solid var(--sl-color-gray-6, #e8ddd0);
-    background: var(--sl-color-bg, #fefcf8);
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.25s ease, padding 0.25s ease;
-  }
-
-  .mobile-menu.open {
-    max-height: 400px;
-    padding: 0.5rem 1rem 0.75rem;
-  }
-
-  .mobile-link {
+  .header-tools {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
+    flex: 0 0 auto;
+    gap: 0.45rem;
+    margin-inline-start: auto;
+    min-width: 0;
+  }
+
+  button {
+    font: inherit;
+  }
+
+  .search-trigger,
+  .icon-button {
+    border: 1px solid var(--jd-border);
+    background: var(--jd-surface);
+    color: var(--jd-muted);
+    cursor: pointer;
+  }
+
+  .search-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    justify-content: center;
+    border-radius: 8px;
+  }
+
+  .search-trigger svg,
+  .icon-button svg {
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.9;
+  }
+
+  .search-label,
+  .shortcut {
+    display: none;
+  }
+
+  .shortcut {
+    margin-inline-start: auto;
+    border: 1px solid var(--jd-border);
+    border-radius: 5px;
+    padding: 0.05rem 0.35rem;
+    background: var(--jd-surface-soft);
+    color: var(--jd-muted);
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .icon-button {
+    display: inline-grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 8px;
+  }
+
+  .search-trigger:hover,
+  .icon-button:hover {
+    border-color: var(--jd-accent);
+    color: var(--jd-accent);
+  }
+
+  .theme-icon-moon {
+    display: none;
+  }
+
+  [data-theme='dark'] .theme-icon-sun {
+    display: none;
+  }
+
+  [data-theme='dark'] .theme-icon-moon {
+    display: block;
+  }
+
+  .mobile-nav-toggle {
+    display: inline-grid;
+  }
+
+  :global([data-has-sidebar]) .mobile-nav-toggle {
+    display: none;
+  }
+
+  .mobile-nav-panel {
+    display: grid;
+    gap: 0.35rem;
+    padding: 0.6rem 1rem 0.8rem;
+    border-top: 1px solid var(--jd-border);
+    background: var(--jd-bg);
+  }
+
+  .mobile-nav-panel[hidden] {
+    display: none;
+  }
+
+  :global([data-has-sidebar]) .mobile-nav-panel {
+    display: none;
+  }
+
+  .mobile-nav-link {
+    display: grid;
+    gap: 0.1rem;
     padding: 0.7rem 0.85rem;
     border-radius: 8px;
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: var(--sl-color-gray-2, #5a4d3f);
+    color: var(--jd-text);
     text-decoration: none;
-    transition: all 0.15s ease;
   }
 
-  .mobile-link:hover {
-    color: var(--sl-color-accent, #c67b3c);
-    background: var(--sl-color-gray-7, #f5e6c8);
+  .mobile-nav-link:hover,
+  .mobile-nav-link.active {
+    background: var(--jd-accent-soft);
+    color: var(--jd-accent);
   }
 
-  .mobile-link.active {
-    color: var(--sl-color-accent, #c67b3c);
-    font-weight: 600;
-    background: var(--sl-color-gray-7, #f5e6c8);
+  .mobile-nav-link span {
+    font-weight: 700;
   }
 
-  .mobile-link-icon {
-    font-size: 1.1rem;
+  .mobile-nav-link small {
+    color: var(--jd-muted);
+    font-size: 0.78rem;
   }
 
-  /* Hamburger animation when open */
-  .mobile-menu.open ~ .top-nav .menu-toggle .hamburger-line:nth-child(1),
-  .menu-toggle.active .hamburger-line:nth-child(1) {
-    transform: translateY(6px) rotate(45deg);
+  .site-search-dialog {
+    width: min(42rem, calc(100vw - 2rem));
+    max-width: none;
+    margin: 4.25rem auto auto;
+    padding: 0;
+    border: 1px solid var(--jd-border);
+    border-radius: 12px;
+    background: var(--jd-surface);
+    color: var(--jd-text);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
   }
 
-  .menu-toggle.active .hamburger-line:nth-child(2) {
-    opacity: 0;
+  .site-search-dialog::backdrop {
+    background: rgba(15, 23, 42, 0.34);
+    backdrop-filter: blur(4px);
   }
 
-  .menu-toggle.active .hamburger-line:nth-child(3) {
-    transform: translateY(-6px) rotate(-45deg);
+  .search-panel {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0.8rem;
   }
 
-  /* ===== Mobile (≤768px) ===== */
-  @media (max-width: 768px) {
-    .top-nav-inner {
-      padding: 0 1rem;
-      height: 48px;
-    }
+  .search-input-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 0.55rem;
+    min-height: 3rem;
+    padding: 0 0.75rem;
+    border: 1px solid var(--jd-border);
+    border-radius: 8px;
+    background: var(--jd-surface-soft);
+  }
 
-    .menu-toggle {
+  .search-input-row svg {
+    width: 1.1rem;
+    height: 1.1rem;
+    fill: none;
+    stroke: var(--jd-muted);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.9;
+  }
+
+  .search-input-row input {
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--jd-text);
+    font: inherit;
+  }
+
+  .search-input-row button {
+    border: 1px solid var(--jd-border);
+    border-radius: 6px;
+    padding: 0.22rem 0.42rem;
+    background: var(--jd-surface);
+    color: var(--jd-muted);
+    cursor: pointer;
+    font-size: 0.75rem;
+  }
+
+  .search-hint {
+    padding: 0 0.35rem;
+    color: var(--jd-muted);
+    font-size: 0.8rem;
+  }
+
+  .search-result-list {
+    display: grid;
+    gap: 0.25rem;
+    max-height: min(28rem, calc(100vh - 12rem));
+    overflow: auto;
+  }
+
+  .search-result {
+    display: grid;
+    gap: 0.18rem;
+    padding: 0.82rem 0.9rem;
+    border-radius: 8px;
+    color: var(--jd-text);
+    text-decoration: none;
+  }
+
+  .search-result:hover,
+  .search-result:focus {
+    outline: none;
+    background: var(--jd-accent-soft);
+  }
+
+  .result-meta,
+  .result-description,
+  .search-empty {
+    color: var(--jd-muted);
+    font-size: 0.82rem;
+  }
+
+  .result-description {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-height: 1.55;
+  }
+
+  .search-empty {
+    margin: 0;
+    padding: 1rem;
+  }
+
+  @media (min-width: 50rem) {
+    .desktop-nav {
       display: flex;
     }
 
-    /* Hide desktop nav links on mobile */
-    .top-nav-links {
+    .search-trigger {
+      width: min(21rem, 24vw);
+      justify-content: flex-start;
+      padding: 0 0.55rem 0 0.75rem;
+    }
+
+    .search-label,
+    .shortcut {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .search-label {
+      color: var(--jd-muted);
+      font-size: 0.86rem;
+    }
+
+    .mobile-nav-toggle {
+      display: none;
+    }
+  }
+
+  @media (max-width: 38rem) {
+    .docs-header-nav {
+      justify-content: space-between;
+      padding-inline: 0.85rem;
+      gap: 0.7rem;
+    }
+
+    .brand-copy {
       display: none;
     }
 
-    /* Show mobile dropdown menu */
-    .mobile-menu {
-      display: flex;
+    .brand-link {
+      flex: 0 0 auto;
     }
 
-    .logo-text {
-      display: none;
+    .header-tools {
+      margin-inline-start: 0;
+    }
+
+    .site-search-dialog {
+      width: 100vw;
+      min-height: 100vh;
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+    }
+
+    .search-panel {
+      min-height: 100vh;
+      padding: 0.75rem;
     }
   }
 </style>

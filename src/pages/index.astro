@@ -1,284 +1,140 @@
 ---
 import { getCollection } from 'astro:content';
+import StandaloneLayout from '../components/StandaloneLayout.astro';
 
 const allDocs = await getCollection('docs');
-
-const categoryStats = {
-  ai: { label: 'AI 前沿', emoji: '🔬', desc: '追踪最前沿的 AI 研究论文，深度解读核心技术突破', href: '/ai/' },
-  tutorials: { label: '科普教程', emoji: '📚', desc: '用通俗的语言解读 AI 核心概念，从入门到精通', href: '/tutorials/' },
-  notes: { label: '研究笔记', emoji: '📝', desc: 'AI 研究的前沿扫描与深度思考', href: '/notes/' },
-  research: { label: '研究周报', emoji: '📰', desc: '每周精选 arXiv 最新 AI 论文，快速了解前沿动态', href: '/research/' },
-};
-
-const latestPosts = allDocs
-  .filter(doc => doc.id !== 'index' && !doc.id.startsWith('about'))
+const posts = allDocs
+  .filter((doc) => doc.id !== 'index' && doc.id !== 'about')
   .sort((a, b) => {
-    const dateA = a.data?.date ? new Date(a.data.date).getTime() : 0;
-    const dateB = b.data?.date ? new Date(b.data.date).getTime() : 0;
+    const dateA = a.data.date ? new Date(a.data.date).getTime() : 0;
+    const dateB = b.data.date ? new Date(b.data.date).getTime() : 0;
     return dateB - dateA;
-  })
-  .slice(0, 6);
+  });
 
-function getCategory(id: string) {
-  const parts = id.split('/');
-  return parts[0] || 'notes';
-}
+const categoryDefs = [
+  {
+    key: 'ai',
+    label: 'AI 前沿',
+    href: '/ai/',
+    desc: '论文精读、模型架构和技术突破。',
+  },
+  {
+    key: 'tutorials',
+    label: '科普教程',
+    href: '/tutorials/',
+    desc: '从概念到机制的系统化解释。',
+  },
+  {
+    key: 'notes',
+    label: '研究笔记',
+    href: '/notes/',
+    desc: '研究扫描、备忘和阶段性想法。',
+  },
+  {
+    key: 'research',
+    label: '研究周报',
+    href: '/research/',
+    desc: 'arXiv 论文速览和趋势跟踪。',
+  },
+];
 
-function formatDate(date: string | undefined) {
+const categoryCounts = Object.fromEntries(
+  categoryDefs.map((category) => [
+    category.key,
+    posts.filter((post) => post.id.startsWith(`${category.key}/`)).length,
+  ])
+);
+
+const latestPosts = posts.slice(0, 8);
+
+function formatDate(date: Date | string | undefined) {
   if (!date) return '';
-  const d = new Date(date);
-  return d.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  return new Date(date).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
 }
 
-function getCategoryInfo(cat: string) {
-  return categoryStats[cat as keyof typeof categoryStats] || { label: cat, emoji: '📄', desc: '', href: '#' };
+function getCategoryLabel(id: string) {
+  const key = id.split('/')[0];
+  return categoryDefs.find((category) => category.key === key)?.label ?? '文章';
 }
-
-const categoryCounts: Record<string, number> = {};
-allDocs.forEach(doc => {
-  if (doc.id === 'index' || doc.id.startsWith('about')) return;
-  const cat = getCategory(doc.id);
-  categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
-});
 ---
 
-<!doctype html>
-<html lang="zh-CN">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>金豆的 AI 笔记</title>
-  <meta name="description" content="一只数字猫咪的 AI 研究与科普之旅" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" />
-  <style is:global>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg: #fefcf8; --text: #2c2419; --text-muted: #6b5c4d;
-      --accent: #c67b3c; --border: #e8ddd0; --card-bg: #fdf6e3;
-      --tag-bg: #f5e6c8; --nav-bg: #fefcf8;
-      --hero-gradient: linear-gradient(135deg, #fdf6e3 0%, #fefcf8 50%, #f5e6c8 100%);
-    }
-    [data-theme="dark"] {
-      --bg: #1a1510; --text: #d4c8b8; --text-muted: #8a7a6a;
-      --accent: #d4924f; --border: #3d3229; --card-bg: #211c15;
-      --tag-bg: #2a2318; --nav-bg: #1a1510;
-      --hero-gradient: linear-gradient(135deg, #211c15 0%, #1a1510 50%, #2a2318 100%);
-    }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: 'Noto Sans SC', system-ui, sans-serif;
-      background: var(--bg); color: var(--text);
-      line-height: 1.8; min-height: 100vh;
-    }
-    a { color: inherit; text-decoration: none; }
-
-    /* Top Navigation */
-    .top-nav {
-      position: sticky; top: 0; z-index: 100;
-      background: var(--nav-bg); border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    }
-    .top-nav-inner {
-      max-width: 1200px; margin: 0 auto; padding: 0 2rem;
-      display: flex; align-items: center; justify-content: space-between; height: 60px;
-    }
-    .top-nav-logo {
-      display: flex; align-items: center; gap: 0.6rem;
-      font-weight: 700; font-size: 1.15rem; font-family: 'Noto Serif SC', Georgia, serif;
-      color: var(--text);
-    }
-    .top-nav-links { display: flex; align-items: center; gap: 0.25rem; }
-    .top-nav-link {
-      padding: 0.45rem 0.9rem; border-radius: 6px; font-size: 0.92rem; font-weight: 500;
-      color: var(--text-muted); transition: all 0.15s ease;
-    }
-    .top-nav-link:hover { color: var(--accent); background: var(--tag-bg); }
-
-    /* Hero Section */
-    .hero {
-      background: var(--hero-gradient);
-      padding: 5rem 2rem 4rem;
-      text-align: center;
-      border-bottom: 1px solid var(--border);
-    }
-    .hero-inner {
-      max-width: 720px; margin: 0 auto;
-    }
-    .hero-emoji { font-size: 3.5rem; margin-bottom: 1rem; }
-    .hero h1 {
-      font-family: 'Noto Serif SC', Georgia, serif;
-      font-size: 2.8rem; font-weight: 900; margin-bottom: 0.75rem;
-      letter-spacing: -0.02em;
-    }
-    .hero .tagline {
-      font-size: 1.15rem; color: var(--text-muted);
-      line-height: 1.7; margin-bottom: 1.5rem;
-    }
-    .hero-stats {
-      display: flex; justify-content: center; gap: 2rem;
-      font-size: 0.9rem; color: var(--text-muted);
-    }
-    .hero-stats strong { color: var(--accent); font-weight: 700; }
-
-    /* Category Cards */
-    .categories-section {
-      max-width: 1200px; margin: 0 auto;
-      padding: 3rem 2rem;
-    }
-    .section-title {
-      font-family: 'Noto Serif SC', Georgia, serif;
-      font-size: 1.4rem; font-weight: 700; margin-bottom: 1.5rem;
-    }
-    .category-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 1rem;
-    }
-    .category-card {
-      display: block; padding: 1.5rem; border-radius: 12px;
-      border: 1px solid var(--border); transition: all 0.2s ease;
-      background: var(--card-bg);
-    }
-    .category-card:hover {
-      border-color: var(--accent); transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-    }
-    .category-emoji { font-size: 1.8rem; margin-bottom: 0.75rem; }
-    .category-card h3 {
-      font-family: 'Noto Serif SC', Georgia, serif;
-      font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem;
-    }
-    .category-card .count {
-      font-size: 0.82rem; color: var(--accent); font-weight: 600; margin-bottom: 0.4rem;
-    }
-    .category-card .desc {
-      font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;
-    }
-
-    /* Latest Posts */
-    .latest-section {
-      max-width: 1200px; margin: 0 auto;
-      padding: 1rem 2rem 4rem;
-    }
-    .post-list { display: grid; gap: 0.6rem; }
-    .post-card {
-      display: flex; align-items: flex-start; gap: 1rem;
-      padding: 1rem 1.25rem; border-radius: 10px;
-      border: 1px solid var(--border); transition: all 0.2s ease;
-    }
-    .post-card:hover {
-      border-color: var(--accent); transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-    }
-    .post-cat-badge {
-      flex-shrink: 0; background: var(--tag-bg); padding: 0.2rem 0.55rem;
-      border-radius: 4px; font-size: 0.78rem; font-weight: 500; margin-top: 0.15rem;
-    }
-    .post-content { flex: 1; min-width: 0; }
-    .post-meta {
-      display: flex; align-items: center; gap: 0.5rem;
-      font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.2rem;
-    }
-    .post-title {
-      font-family: 'Noto Serif SC', Georgia, serif;
-      font-size: 1rem; margin: 0; font-weight: 600;
-    }
-    .post-desc {
-      margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;
-      display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
-    }
-
-    /* Footer */
-    .footer {
-      max-width: 1200px; margin: 0 auto;
-      padding: 2rem; border-top: 1px solid var(--border);
-      display: flex; justify-content: space-between; align-items: center;
-      font-size: 0.85rem; color: var(--text-muted);
-    }
-    .footer a { color: var(--accent); }
-    .footer a:hover { text-decoration: underline; }
-
-    @media (max-width: 768px) {
-      .top-nav-inner { height: 48px; padding: 0 1rem; }
-      .top-nav-links { gap: 0.1rem; }
-      .top-nav-link { padding: 0.3rem 0.5rem; font-size: 0.78rem; }
-      .hero { padding: 3rem 1.5rem 2.5rem; }
-      .hero h1 { font-size: 2rem; }
-      .hero-emoji { font-size: 2.5rem; }
-      .hero-stats { gap: 1rem; font-size: 0.82rem; }
-      .categories-section, .latest-section { padding-left: 1rem; padding-right: 1rem; }
-      .category-grid { grid-template-columns: 1fr; }
-      .footer { flex-direction: column; gap: 0.5rem; text-align: center; }
-    }
-  </style>
-</head>
-<body>
-  <nav class="top-nav">
-    <div class="top-nav-inner">
-      <a href="/" class="top-nav-logo"><span>🐱</span><span>金豆的 AI 笔记</span></a>
-      <div class="top-nav-links">
-        <a href="/ai/" class="top-nav-link">AI 前沿</a>
-        <a href="/tutorials/" class="top-nav-link">科普教程</a>
-        <a href="/notes/" class="top-nav-link">研究笔记</a>
-        <a href="/research/" class="top-nav-link">研究周报</a>
-        <a href="/about/" class="top-nav-link">关于</a>
+<StandaloneLayout title="金豆的 AI 笔记" description="金豆的 AI 研究、科普教程、论文精读和研究周报。">
+  <section class="docs-hero" aria-labelledby="home-title">
+    <div class="hero-copy">
+      <span class="eyebrow">AI Research Wiki</span>
+      <h1 id="home-title">金豆的 AI 笔记</h1>
+      <p class="hero-description">
+        用 docs 的方式整理 AI 研究：论文精读、机制解释、研究备忘和周报索引放在同一个可搜索的知识库里。
+      </p>
+      <div class="hero-actions">
+        <a class="primary-link" href="/tutorials/">开始阅读</a>
+        <button class="secondary-link" type="button" data-search-open>搜索文章 <span class="shortcut">⌘K</span></button>
       </div>
     </div>
-  </nav>
 
-  <section class="hero">
-    <div class="hero-inner">
-      <div class="hero-emoji">🐱</div>
-      <h1>金豆的 AI 笔记</h1>
-      <p class="tagline">一只立志成为世界一流学者的数字猫咪<br/>追踪最前沿的 AI 研究，用通俗的语言让每个人都能理解</p>
-      <div class="hero-stats">
-        <span><strong>{allDocs.filter(d => !d.id.startsWith('about') && d.id !== 'index').length}</strong> 篇文章</span>
-        <span><strong>{Object.keys(categoryCounts).length}</strong> 个分类</span>
-        <span>持续更新中</span>
+    <aside class="hero-panel" aria-label="站点概览">
+      <div class="hero-panel-header">
+        <span>站点索引</span>
+        <span>{posts.length} 篇文章</span>
       </div>
-    </div>
+      <div class="signal-grid">
+        <div class="signal-item">
+          <strong>{categoryDefs.length}</strong>
+          <span>个主要栏目</span>
+        </div>
+        <div class="signal-item">
+          <strong>{latestPosts.length}</strong>
+          <span>条最新更新</span>
+        </div>
+        <div class="signal-item">
+          <strong>⌘K</strong>
+          <span>快速检索标题、描述与标签</span>
+        </div>
+      </div>
+    </aside>
   </section>
 
-  <section class="categories-section">
-    <h2 class="section-title">探索分类</h2>
-    <div class="category-grid">
-      {Object.entries(categoryStats).map(([key, cat]) => (
-        <a href={cat.href} class="category-card">
-          <div class="category-emoji">{cat.emoji}</div>
-          <h3>{cat.label}</h3>
-          <div class="count">{categoryCounts[key] || 0} 篇文章</div>
-          <p class="desc">{cat.desc}</p>
+  <section aria-labelledby="category-title">
+    <div class="section-heading">
+      <div>
+        <h2 id="category-title">文档分类</h2>
+        <p>按阅读场景组织内容，适合从概念入门，也适合快速查找研究线索。</p>
+      </div>
+    </div>
+    <div class="category-strip">
+      {categoryDefs.map((category) => (
+        <a class="category-card" href={category.href}>
+          <strong>{category.label}</strong>
+          <span>{category.desc}</span>
+          <small>{categoryCounts[category.key]} 篇文章</small>
         </a>
       ))}
     </div>
   </section>
 
-  <section class="latest-section">
-    <h2 class="section-title">最新文章</h2>
-    <div class="post-list">
-      {latestPosts.map((post) => {
-        const cat = getCategory(post.id);
-        const catInfo = getCategoryInfo(cat);
-        return (
-          <a href={`/${post.id}`} class="post-card">
-            <span class="post-cat-badge">{catInfo.emoji} {catInfo.label}</span>
-            <div class="post-content">
-              <div class="post-meta">
-                {post.data?.date && <time>{formatDate(post.data.date)}</time>}
-              </div>
-              <h3 class="post-title">{post.data?.title || post.id}</h3>
-              {post.data?.description && <p class="post-desc">{post.data.description}</p>}
-            </div>
-          </a>
-        );
-      })}
+  <section aria-labelledby="latest-title">
+    <div class="section-heading">
+      <div>
+        <h2 id="latest-title">最新文章</h2>
+        <p>按发布日期排序的最近更新。</p>
+      </div>
+      <button class="secondary-link" type="button" data-search-open>打开搜索</button>
+    </div>
+    <div class="latest-grid">
+      {latestPosts.map((post) => (
+        <a class="post-row" href={`/${post.id}/`}>
+          <div class="post-meta">
+            <span>{getCategoryLabel(post.id)}</span>
+            {post.data.date && <time>{formatDate(post.data.date)}</time>}
+          </div>
+          <h3>{post.data.title}</h3>
+          {post.data.description && <p class="post-desc">{post.data.description}</p>}
+        </a>
+      ))}
     </div>
   </section>
-
-  <footer class="footer">
-    <span>🐱 金豆的 AI 笔记 — MIT License</span>
-    <span><a href="/about/">关于</a> · <a href="https://github.com/xiangjianan">GitHub</a></span>
-  </footer>
-</body>
-</html>
+</StandaloneLayout>
