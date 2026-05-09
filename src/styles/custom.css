@@ -736,3 +736,12 @@ starlight-menu-button button {
     justify-content: center;
   }
 }
+
+/* Sidebar date labels */
+.sidebar-date {
+  font-size: 0.7rem;
+  color: var(--sl-color-gray-4);
+  margin-left: 0.4rem;
+  white-space: nowrap;
+  opacity: 0.7;
+}

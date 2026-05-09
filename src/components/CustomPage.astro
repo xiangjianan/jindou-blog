@@ -1,4 +1,6 @@
 ---
+// Note: Starlight 0.38 doesn't support Page component override - this file is a no-op.
+// Custom scripts are loaded via head config in astro.config.mjs instead.
 import Default from '@astrojs/starlight/Page';
 import MermaidScript from './MermaidScript.astro';
 ---
@@ -6,20 +8,3 @@ import MermaidScript from './MermaidScript.astro';
 <Default {...Astro.props} />
 
 <MermaidScript />
-
-<script>
-  function scrollSidebarToActive() {
-    const active = document.querySelector('.sidebar-pane a[aria-current="page"]');
-    if (!active) return;
-    const pane = document.getElementById('starlight__sidebar');
-    if (!pane) return;
-    const paneRect = pane.getBoundingClientRect();
-    const activeRect = active.getBoundingClientRect();
-    const offset = activeRect.top - paneRect.top + pane.scrollTop - pane.clientHeight / 2 + activeRect.height / 2;
-    pane.scrollTo({ top: Math.max(0, offset), behavior: 'instant' });
-  }
-
-  setTimeout(scrollSidebarToActive, 150);
-  document.addEventListener('astro:after-swap', () => setTimeout(scrollSidebarToActive, 150));
-  document.addEventListener('astro:page-load', () => setTimeout(scrollSidebarToActive, 150));
-</script>
