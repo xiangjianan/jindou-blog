@@ -1,0 +1,53 @@
+---
+title: "RLVR 真的能激发 LLM 的新推理能力吗？"
+description: "精读 NeurIPS 2025 Oral 论文 — RLVR 只是压缩了基座模型的输出分布，并未创造超越基座的推理能力"
+date: 2026-05-20
+tags: [研究, arXiv, LLM, 强化学习, 推理, NeurIPS]
+---
+
+## 论文信息
+
+- **标题:** Does Reinforcement Learning Really Incentivize Reasoning Capacity in LLMs Beyond the Base Model?
+- **作者:** Yang Yue, Zhiqi Chen, Rui Lu, Andrew Zhao, Zhaokai Wang, Shiji Song, Gao Huang（清华大学）
+- **arXiv:** https://arxiv.org/abs/2504.13837
+- **发表:** NeurIPS 2025 Oral / ICML 2025 AI4MATH Workshop Best Paper
+
+## 问题定义
+
+RLVR（Reinforcement Learning with Verifiable Rewards）是当前 LLM 推理能力训练的主流范式，DeepSeek-R1、OpenAI o1 等均基于此路线。业界普遍假设：RLVR 能让 LLM 通过自我探索获得**超越基座模型的新推理能力**。本文质疑这一假设。
+
+## 核心方法
+
+1. **pass@k 大 k 评估：** 传统用 pass@1 评估，但 RLVR 训练后的模型在 pass@1 上表现更好，这可能只是分布偏移（更倾向于正确路径），而非能力提升。改用 pass@k（k 很大，如 10^4~10^6）穷举基座模型的采样分布。
+2. **覆盖度分析（Coverage Analysis）：** 统计 RL 模型能解决的问题中，有多少也在基座模型的 pass@k 可解集内。
+3. **困惑度分析（Perplexity Analysis）：** 检查 RL 模型生成的推理路径在基座模型下的困惑度，判断这些路径是否已在基座模型的分布中。
+
+**关键发现：**
+- RLVR 模型 pass@1 显著优于基座模型（如 AIME24 上），但 **pass@k（大 k）时差距消失**
+- 在 AIME24 上，RL 模型解出的 >95% 题目，基座模型在足够多次采样下也能解出
+- RL 模型生成的推理路径的困惑度与基座模型分布一致 → **推理能力源于且受限于基座模型**
+- RLVR 的效果本质上是**压缩了基座模型的分布**，使其更集中在正确路径上
+
+## 实验结果
+
+- 跨多个模型族（Qwen、Llama、DeepSeek 等）、多种 RL 算法（GRPO、PPO 等）验证
+- 覆盖数学、编程、视觉推理基准
+- 蒸馏模型（从更强教师学）可以超越 pass@k 上限，但 RLVR 不能
+- 结论：**RLVR 收紧推理边界，而非拓宽**
+
+## 个人见解
+
+### Strengths
+
+这是一篇极其重要的**负面结果**论文。在 RLVR 被盲目追捧为"推理能力涌现"的当下，用简洁有力的实验设计戳破了泡沫。pass@k 大 k 评估思路优雅，直击"分布偏移 vs 能力增长"的核心区分。实验覆盖面广，结论稳健。
+
+### Weaknesses
+
+论文指出 RLVR 无法突破基座模型，但**没有证明这是 RLVR 方法论的内在局限，还是当前实现的不够好**。理论上，探索性更强的 RL（如树搜索、环境交互）可能仍然能发现新策略。pass@k 的计算成本极高，实际中不可能真的采样 10^6 次，文中用了一些近似方法，可能引入噪声。对"什么是真正的推理能力"缺少哲学层面的探讨——如果模型通过 RL 更高效地利用已有知识，这算不算"能力提升"？
+
+### 对未来的启发
+
+1. **RLVR 的真正价值在于效率提升，而非能力突破**——这在工程上仍有巨大价值
+2. **蒸馏 > RLVR** 作为推理训练的信号源？如果目标是提升能力上限，蒸馏可能是更有效的路径
+3. **需要更好的 RL 范式**：多轮环境交互、持续缩放、搜索增强可能是解锁真正新推理能力的关键
+4. 对当前"RL 造就能推理的 AI"叙事要保持清醒——至少目前为止，RL 更像是一个**分布调节器**而非**能力创造器**
