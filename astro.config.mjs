@@ -3,7 +3,7 @@ import starlight from '@astrojs/starlight';
 import mdx from '@astrojs/mdx';
 
 export default defineConfig({
-  site: 'https://jindou-blog.pages.dev',
+  site: 'https://aiblog.helloxjn.com',
   integrations: [
     starlight({
       title: '金豆的 AI 笔记',
@@ -28,6 +28,8 @@ export default defineConfig({
         './src/styles/custom.css',
       ],
       components: {
+        Head: './src/components/CustomHead.astro',
+        PageFrame: './src/components/CustomPageFrame.astro',
         Page: './src/components/CustomPage.astro',
         PageTitle: './src/components/PageTitle.astro',
         Header: './src/components/CustomHeader.astro',
