@@ -2,6 +2,9 @@
 title: Multi-Head Attention：为什么需要一个头变多个头？
 description: 深入理解 Transformer 的核心设计——多头注意力的直觉、原理和必要性
 date: 2026-03-24
+createdDate: "2026-03-27"
+sidebar:
+  order: -20260324
 tags: [教程, Transformer, 注意力机制, 深度学习]
 ---
 

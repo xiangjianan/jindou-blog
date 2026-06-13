@@ -2,6 +2,9 @@
 title: "过早定论：当 AI 不知道自己不知道"
 description: LLM 在信息不足时仍自信给出确定性答案——过早定论现象的机制、实验证据与防御策略
 date: 2026-05-16
+createdDate: "2026-05-16"
+sidebar:
+  order: -20260516
 tags: [教程, LLM, 认知偏误, 过早定论, 幻觉, AI安全]
 ---
 

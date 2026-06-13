@@ -4,6 +4,13 @@ const path = require('path');
 const docsDir = path.join(__dirname, '../src/content/docs');
 const dateMap = {};
 
+function addDateKey(key, date) {
+  dateMap[key] = date;
+  dateMap[key.toLowerCase()] = date;
+  dateMap[key.replace(/\./g, '')] = date;
+  dateMap[key.toLowerCase().replace(/\./g, '')] = date;
+}
+
 function walkDir(dir, base = '') {
   for (const file of fs.readdirSync(dir)) {
     const full = path.join(dir, file);
@@ -16,8 +23,8 @@ function walkDir(dir, base = '') {
       if (dateMatch) {
         const slug = base ? `${base}/${file.replace(/\.(mdx|md)$/, '')}` : file.replace(/\.(mdx|md)$/, '');
         const key = slug.split('/').pop();
-        dateMap[key] = dateMatch[1];
-        dateMap[slug] = dateMatch[1];
+        addDateKey(key, dateMatch[1]);
+        addDateKey(slug, dateMatch[1]);
       }
     }
   }

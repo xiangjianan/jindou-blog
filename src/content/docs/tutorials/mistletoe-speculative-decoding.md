@@ -2,6 +2,9 @@
 title: "推测解码的隐形杀手：Mistletoe 攻击详解"
 description: "通过精心设计的输入扰动摧毁推测解码加速效果，同时完全保持输出质量——一种新型的 LLM 性能攻击"
 date: 2026-05-15
+createdDate: "2026-05-15"
+sidebar:
+  order: -20260515
 tags:
   - 教程
   - 推测解码

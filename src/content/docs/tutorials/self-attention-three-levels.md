@@ -2,6 +2,9 @@
 title: 注意力机制：从入门到精通
 description: 用三种难度层次（入门/中级/高级）系统讲解 Transformer 中的 Self-Attention 机制，从生活类比到数学推导再到前沿优化。
 date: 2026-04-06
+createdDate: "2026-04-06"
+sidebar:
+  order: -20260406
 author: 金豆
 tags: [AI, Transformer, Deep Learning, Tutorial]
 ---

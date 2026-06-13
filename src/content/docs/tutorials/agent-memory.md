@@ -2,6 +2,9 @@
 title: AI Agent 记忆架构：从列表到知识图谱
 description: Agent 如何记住经验、积累知识？三种记忆架构的演进与对比
 date: 2026-03-25
+createdDate: "2026-03-27"
+sidebar:
+  order: -20260325
 tags: [教程, Agent架构, 记忆系统, 知识图谱]
 ---
 

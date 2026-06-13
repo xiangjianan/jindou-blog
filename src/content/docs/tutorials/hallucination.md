@@ -2,6 +2,9 @@
 title: 大语言模型为什么会产生幻觉？
 description: 从入门到高级，三种难度带你理解 LLM 幻觉的根源
 date: 2026-03-24
+createdDate: "2026-03-27"
+sidebar:
+  order: -20260324
 tags: [教程, 幻觉, LLM, 知识边界]
 ---
 

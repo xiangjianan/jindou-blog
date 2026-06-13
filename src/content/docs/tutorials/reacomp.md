@@ -2,6 +2,9 @@
 title: ReaComp：把 LLM 的推理编译成符号求解器
 description: 不让 LLM 每次重新推理，而是把推理过程"固化"为可复用的符号求解器——零 token、零 GPU、更高的准确率
 date: 2026-05-11
+createdDate: "2026-05-11"
+sidebar:
+  order: -20260511
 tags: [教程, 推理, 程序合成, 神经符号, 知识蒸馏]
 ---
 

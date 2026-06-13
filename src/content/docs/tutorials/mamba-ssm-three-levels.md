@@ -2,6 +2,9 @@
 title: Mamba 与状态空间模型（SSM）：三级教程
 description: 从日常比喻到数学形式化，全面理解 Mamba 选择性状态空间模型
 date: 2026-03-31
+createdDate: "2026-03-31"
+sidebar:
+  order: -20260331
 tags: [教程, SSM, Mamba, 序列建模, 架构]
 ---
 

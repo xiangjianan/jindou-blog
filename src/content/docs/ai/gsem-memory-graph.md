@@ -2,6 +2,9 @@
 title: GSEM：从列表到图，AI Agent 记忆架构的进化
 description: 当记忆从扁平列表升级为可进化的知识图谱，Agent 的学习能力会发生什么变化？
 date: 2026-03-25
+createdDate: "2026-03-27"
+sidebar:
+  order: -20260325
 tags: [Agent记忆, 知识图谱, 自我进化, 临床推理]
 ---
 

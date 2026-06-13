@@ -2,6 +2,9 @@
 title: Agent-BOM：给 LLM Agent 装上"黑匣子"
 description: 用统一图表示实现 Agent 系统的安全审计——从碎片化日志到可查询的因果关系图
 date: 2026-05-12
+createdDate: "2026-05-12"
+sidebar:
+  order: -20260512
 tags: [教程, Agent安全, 图表示, 安全审计, LLM Agent]
 ---
 

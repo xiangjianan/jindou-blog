@@ -1,6 +1,9 @@
 ---
 title: Transformer 自注意力机制：三难度解读
 date: 2026-03-30
+createdDate: "2026-03-30"
+sidebar:
+  order: -20260330
 category: tutorials
 tags: [transformer, attention, deep-learning]
 ---

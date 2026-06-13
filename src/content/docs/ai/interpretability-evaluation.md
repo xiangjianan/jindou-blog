@@ -2,6 +2,9 @@
 title: 可解释性研究的评价困境
 description: 用 LLM 评价 LLM 的解释，可靠吗？自动化可解释性系统的根本性缺陷
 date: 2026-03-24
+createdDate: "2026-03-27"
+sidebar:
+  order: -20260324
 tags: [可解释性, 评价方法, 机械可解释性]
 ---
 

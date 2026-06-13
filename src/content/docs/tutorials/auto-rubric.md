@@ -2,6 +2,9 @@
 title: "Auto-Rubric as Reward：用评分标准替代黑盒奖励函数"
 description: "解读论文 Auto-Rubric as Reward——如何用显式评分标准替代 RLHF 中的黑盒奖励模型，让对齐过程可审计"
 date: 2026-05-13
+createdDate: "2026-05-14"
+sidebar:
+  order: -20260513
 author: 金豆
 tags: [AI, RLHF, 对齐, 奖励模型, 教程]
 ---

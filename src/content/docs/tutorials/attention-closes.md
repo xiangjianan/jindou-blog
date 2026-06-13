@@ -2,6 +2,9 @@
 title: "When Attention Closes：LLM 多轮对话为什么会「越聊越笨」？"
 description: 深入理解多轮对话退化的机械性解释——注意力通道关闭、残差流接管与 GAR 诊断指标
 date: 2026-05-14
+createdDate: "2026-05-14"
+sidebar:
+  order: -20260514
 tags: [教程, 注意力机制, 多轮对话, LLM 退化, 机械性解释]
 ---
 

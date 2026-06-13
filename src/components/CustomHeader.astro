@@ -6,6 +6,7 @@ type CategoryDef = {
   href: string;
   prefix: string;
   description: string;
+  latestHref?: string;
 };
 
 const categories: CategoryDef[] = [
@@ -46,6 +47,24 @@ function formatDate(date: Date | string | undefined) {
   });
 }
 
+function getPostTime(date: Date | string | undefined) {
+  return date ? new Date(date).getTime() : 0;
+}
+
+const latestHrefByCategory = new Map(
+  ['ai', 'tutorials', 'notes', 'research'].map((category) => {
+    const latest = docs
+      .filter((doc) => doc.id.startsWith(`${category}/`))
+      .sort((a, b) => getPostTime(b.data.date) - getPostTime(a.data.date))[0];
+    return [category, latest ? toHref(latest.id) : `/${category}/`];
+  })
+);
+
+categories.forEach((category) => {
+  const categoryKey = category.prefix.replace(/^\/|\/$/g, '');
+  category.latestHref = latestHrefByCategory.get(categoryKey) ?? category.href;
+});
+
 const searchItems = docs
   .filter((doc) => doc.id !== 'index')
   .map((doc) => ({
@@ -72,7 +91,7 @@ const searchItems = docs
     <div class="desktop-nav" aria-label="分类">
       {categories.map((cat) => (
         <a
-          href={cat.href}
+          href={cat.latestHref}
           class:list={['nav-link', { active: currentPath === cat.href || currentPath.startsWith(cat.prefix) }]}
         >
           {cat.label}
@@ -109,7 +128,7 @@ const searchItems = docs
   <div class="mobile-nav-panel" id="site-mobile-nav" data-mobile-nav hidden>
     {categories.map((cat) => (
       <a
-        href={cat.href}
+        href={cat.latestHref}
         class:list={['mobile-nav-link', { active: currentPath === cat.href || currentPath.startsWith(cat.prefix) }]}
       >
         <span>{cat.label}</span>

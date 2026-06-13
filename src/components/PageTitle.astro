@@ -1,16 +1,31 @@
 ---
 const PAGE_TITLE_ID = '_top';
+const entryData = Astro.locals.starlightRoute.entry.data;
+
+function formatDate(date: Date | string | undefined) {
+  if (!date) return '';
+  return new Date(date).toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
 ---
 
 <div class="title-wrapper">
-  <h1 id={PAGE_TITLE_ID}>{Astro.locals.starlightRoute.entry.data.title}</h1>
-  {Astro.props.frontmatter?.date && (
-    <time class="publish-date">
-      {new Date(Astro.props.frontmatter.date).toLocaleDateString('zh-CN', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })}
-    </time>
+  <h1 id={PAGE_TITLE_ID}>{entryData.title}</h1>
+  {(entryData.date || entryData.createdDate) && (
+    <div class="article-dates">
+      {entryData.date && (
+        <time class="article-date" datetime={new Date(entryData.date).toISOString()}>
+          发布日期：{formatDate(entryData.date)}
+        </time>
+      )}
+      {entryData.createdDate && (
+        <time class="article-date" datetime={new Date(entryData.createdDate).toISOString()}>
+          创建日期：{formatDate(entryData.createdDate)}
+        </time>
+      )}
+    </div>
   )}
 </div>
