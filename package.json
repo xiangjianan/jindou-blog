@@ -6,7 +6,8 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "node scripts/generate-sidebar-dates.js && astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "deploy": "npm run build && npx wrangler pages deploy ./dist --project-name=jindou-blog --branch=main"
   },
   "keywords": [],
   "author": "",
