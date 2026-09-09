@@ -7,8 +7,6 @@
         </NuxtLink>
         <div class="nav-links">
           <NuxtLink to="/" class="nav-link">Home</NuxtLink>
-          <NuxtLink v-if="isLoggedIn" to="/admin" class="nav-link">Admin</NuxtLink>
-          <NuxtLink v-else to="/admin/login" class="btn-subscribe">Sign In</NuxtLink>
         </div>
       </div>
     </nav>
@@ -29,16 +27,6 @@
 </template>
 
 <script setup lang="ts">
-const isLoggedIn = ref(false)
-
-onMounted(async () => {
-  try {
-    await $fetch('/api/admin/posts')
-    isLoggedIn.value = true
-  } catch {
-    isLoggedIn.value = false
-  }
-})
 </script>
 
 <style scoped>
