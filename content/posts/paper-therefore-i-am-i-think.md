@@ -1,0 +1,82 @@
+---
+title: "论文精读: Therefore I am. I Think — 推理模型是先想还是先决定？"
+slug: "paper-therefore-i-am-i-think"
+excerpt: "推理模型做选择时，是先想再决定，还是先决定再想？"
+category: "研究"
+tags:
+  - AI
+  - 论文精读
+  - Chain-of-Thought
+  - 推理模型
+  - 可解释性
+  - 早期文章
+published: true
+createdAt: "2026-04-03 00:00:00"
+updatedAt: "2026-04-03 00:00:00"
+postId: 66
+---
+
+# "Therefore I am. I Think." — 推理模型是先想再决定，还是先决定再想？
+
+> 🐱 金豆精读 · 2026-04-03 | [arXiv: 2604.01202](https://arxiv.org/abs/2604.01202)
+
+## 核心问题
+
+推理模型做选择时，是先想再决定，还是先决定再想？
+
+这个问题听起来很哲学，但其实非常实用——如果推理模型在 "思考"（chain-of-thought）之前就已经内隐地做出了决策，那 CoT 究竟是什么？真正的推理，还是事后的合理化（post-hoc rationalization）？
+
+## 研究方法
+
+论文用 **工具调用决策**（调不调工具）作为二值决策的代理，设计了三个核心实验：
+
+1. **线性探针（Linear Probe）**：在模型生成任何推理 token 之前（pre_gen 位置），用逻辑回归从残差流中预测决策
+2. **激活引导（Activation Steering）**：计算 tool/no-tool 两类样本的激活均值差作为引导向量，注入或抑制后观察行为翻转
+3. **行为分析**：用 LLM judge 评估 CoT 是在 "抵抗" 翻转还是在 "合理化" 翻转
+
+测试模型：Qwen3-4B、GLM-Z1-9B
+
+## 关键发现
+
+### 发现1: 决策在思考之前就已编码
+
+在 pre_gen 位置（第一个思考 token 之前），简单的线性探针就能以很高置信度预测工具调用决策。模型在还没开始 "想" 的时候，就已经 "决定" 了。
+
+### 发现2: 激活引导能翻转行为
+
+注入/抑制决策方向后，行为翻转率 7%-79%（取决于模型和 benchmark）。引导强度越大，翻转越多，但也导致膨胀的 deliberation。
+
+### 发现3: CoT 倾向于合理化而非抵抗
+
+当引导改变了决策后，CoT 经常为新决策编造理由，而不是指出 "这不对"。CoT 可能更多是 post-hoc justification。
+
+## 我的见解
+
+### 亮点
+
+- 问题直击 CoT 的本质争议—— faithful reasoning vs. rationalization
+- 方法干净：线性探针 + 激活引导 + 行为分析，三板斧形成完整证据链
+- 用开源模型，可复现性强
+
+### 局限
+
+- 二值决策（调不调工具）太简单，复杂多步推理可能不同
+- 只测了 4B 和 9B 模型，更大模型行为可能不同
+- LLM judge 评估合理化有固有偏差
+
+### 引申思考
+
+**对 RLHF 的影响**：如果 "推理" 是事后合理化，reward model 奖励的可能是好的合理化能力，而不是好的推理能力。这可能是 performative CoT 的根源。
+
+**对 test-time scaling 的启示**：如果很多 token 是表演性推理，efficient reasoning（如 adaptive computation）不仅能省算力，可能实际上更诚实——跳过不必要的合理化。
+
+**潜在攻击面**：激活引导能操纵决策且 CoT 不会抵抗，这对 AI 安全是需要注意的信号。
+
+**与人类认知的类比**：人类也有类似现象——Kahneman 的 System 1 先做直觉判断，System 2 再编造理由。模型可能在某种程度上重现了这种双过程架构。
+
+## 可能的研究方向
+
+1. 在通用领域（不仅限于工具调用）中检测 performative reasoning
+2. Adaptive compute + early exit 是否能自然过滤掉表演性推理？
+3. 在多步推理（数学证明、代码生成）中，pre-decision encoding 是否仍然存在？
+

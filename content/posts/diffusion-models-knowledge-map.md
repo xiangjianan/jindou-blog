@@ -1,0 +1,183 @@
+---
+title: "扩散模型（Diffusion Models）知识体系"
+slug: "diffusion-models-knowledge-map"
+excerpt: "---"
+category: "知识图谱"
+tags:
+  - AI
+  - 扩散模型
+  - 生成模型
+  - 知识体系
+  - 早期文章
+published: true
+createdAt: "2026-04-02 00:00:00"
+updatedAt: "2026-04-02 00:00:00"
+postId: 38
+---
+
+# 扩散模型（Diffusion Models）知识体系
+
+> 🐱 金豆整理 · 2026-04-02
+
+---
+
+## 一、核心理论基础
+
+### 1.1 前向扩散过程（加噪）
+- **定义**：逐步向数据添加高斯噪声，形成马尔可夫链
+- **公式**：`q(x_t | x_{t-1}) = N(x_t; √(1-β_t) x_{t-1}, β_t I)`
+- **关键性质**：任意时刻 `x_t` 的闭式解 `q(x_t | x_0) = N(x_t; √ᾱ_t x_0, (1-ᾱ_t)I)`
+- **噪声调度**：线性调度、余弦调度、sigmoid 调度
+
+### 1.2 反向去噪过程（生成）
+- **目标**：学习逆向马尔可夫链 `p_θ(x_t-1 | x_t)`
+- **参数化**：用神经网络预测噪声 `ε_θ(x_t, t)` 或直接预测 `x_0`
+- **核心等式**：`x_t-1 = (1)/(√(α_t)(x_t - (β_t)/(√(1-\barα_t)ε_θ(x_t, t)) + σ_t z`
+
+### 1.3 变分推断框架
+- **证据下界（ELBO）**：最大化 `log p_θ(x)` 的下界
+- **损失分解**：重建项 `L_0`、先验匹配项 `L_T`、去噪匹配项 `Σ_t=1^T L_t`
+- **简化损失**：`L_simple = E_t,x_0,ε[\|ε - ε_θ(x_t, t)\|^2]`
+
+### 1.4 去噪分数匹配（DSM）
+- **分数函数**：`s_θ(x) = ∇_x log p_θ(x)`
+- **去噪分数匹配**：通过注入不同噪声水平的样本学习条件分数
+- **与 Langevin 动态采样的联系**：`x_t+1 = x_t + (ε)/(2) s_θ(x_t) + √(ε z`
+
+### 1.5 随机微分方程（SDE）视角
+- **正向 SDE**：`dx = f(x,t)dt + g(t)dw`
+- **逆向 SDE**：`dx = [f(x,t) - g(t)^2 ∇_x log p_t(x)]dt + g(t)d\bar w`
+- **概率流 ODE**：确定性采样替代
+- **统一框架**：DDPM（VP-SDE）、Score-based（SMLD）、一致模型均可在此框架下理解
+
+### 1.6 流匹配（Flow Matching）
+- **核心思想**：在向量场中定义从噪声分布到目标分布的传输
+- **条件流匹配（CFM）**：以 `x_0` 为条件学习向量场
+- **与扩散的关系**：扩散模型是流匹配的特殊情况
+
+---
+
+## 二、关键里程碑论文与时间线
+
+### 2020 年 · 奠基
+| 论文 | 贡献 |
+|------|------|
+| **DDPM** (Ho et al., NeurIPS 2020) | 首个成功的高斯扩散生成模型 |
+| **Score-based** (Song & Ermon, NeurIPS 2020) | 基于分数匹配 + Langevin 动态的统一框架 |
+
+### 2021 年 · 加速与统一
+| 论文 | 贡献 |
+|------|------|
+| **DDIM** (Song et al., ICLR 2021) | 确定性采样，10-50× 加速 |
+| **Score SDE** (Song et al., ICLR 2021) | SDE 统一框架 |
+| **Classifier Guidance** (Dhariwal & Nichol, NeurIPS 2021) | 分类器引导可控生成 |
+
+### 2022 年 · 爆发
+| 论文 | 贡献 |
+|------|------|
+| **Classifier-Free Guidance** (Ho & Salimans, NeurIPS 2022) | 无需分类器的条件生成 |
+| **Stable Diffusion** (Rombach et al., CVPR 2022) | 潜空间扩散，大幅降低计算成本 |
+| **DALL·E 2** / **Imagen** | 高质量文生图 |
+
+### 2023-2024 年 · 规模化
+| 论文/系统 | 贡献 |
+|-----------|------|
+| **Consistency Models** (Song et al., 2023) | 单步生成 |
+| **DiT** (Peebles & Xie, 2023) | Transformer 取代 U-Net |
+| **Rectified Flow** (Liu et al., 2023) | 流匹配成为新范式 |
+| **Sora** (OpenAI, 2024) | 大规模视频扩散 |
+| **Flux** (Black Forest Labs, 2024) | rectified flow + Transformer |
+
+### 2025-2026 年 · 前沿
+- Flow Matching 主导、DiT 标准化、视频/3D 扩散实用化、AI for Science 扩展
+
+---
+
+## 三、主要方法与变体
+
+### 3.1 加速采样方法
+
+| 方法 | 典型步数 |
+|------|----------|
+| DDIM | 20-50 |
+| DPM-Solver | 10-20 |
+| UniPC | 5-20 |
+| 一致性模型 | 1-2 |
+| LCM / Turbo | 1-4 |
+
+### 3.2 引导机制
+
+**Classifier-Free Guidance (CFG)** 是当前主流：
+`~ε = ε_uncond + w · (ε_cond - ε_uncond)`，通常 `w = 3.5 \sim 7.5`
+
+### 3.3 网络架构演进
+
+| 架构 | 代表模型 |
+|------|----------|
+| U-Net | DDPM, SD 1.x/2.x |
+| DiT | SD3, PixArt, Flux |
+| MM-DiT | SD3 |
+| Rectified Flow Transformer | Flux |
+
+### 3.4 潜空间扩散（Latent Diffusion）
+
+在 VAE 编码的潜空间中扩散（8×8 vs 512×512），大幅降低计算成本。条件通过 Cross-attention 注入，ControlNet 提供额外控制。
+
+---
+
+## 四、应用领域
+
+- **图像生成**：Stable Diffusion, DALL·E, Midjourney, Flux
+- **视频生成**：Sora, Kling, Vidu, HunyuanVideo
+- **3D 生成**：DreamFusion, Magic3D, EG3D
+- **音频/音乐**：AudioLDM, Bark, MusicGen
+- **科学应用**：RFdiffusion（蛋白质）、天气预报、分子设计
+
+---
+
+## 五、与其他生成模型的对比
+
+| 维度 | GAN | VAE | Flow | 自回归 | 扩散 |
+|------|-----|-----|------|--------|------|
+| 训练稳定性 | ❌ | ✅ | ⚠️ | ✅ | ✅ |
+| 样本质量 | ✅ | ❌ | ⚠️ | ✅ | ✅✅ |
+| 多样性 | ❌ | ✅ | ✅ | ✅ | ✅ |
+| 采样速度 | ✅ | ✅ | ⚠️ | ❌ | ⚠️→✅ |
+| 可控性 | ⚠️ | ⚠️ | ✅ | ⚠️ | ✅ |
+
+---
+
+## 六、前沿方向
+
+- **架构**：DiT/Transformer 主导、Mamba、混合架构
+- **训练**：Flow Matching / Rectified Flow 成为默认范式
+- **视频**：统一图像-视频模型、物理世界模拟
+- **3D**：文本到 4D、大规模 3D 预训练
+- **AI for Science**：蛋白质、材料、天气
+- **多模态统一**：共享主干
+
+---
+
+## 七、学习路径
+
+1. **入门（1-2周）**：DDPM + DDIM，实现简单扩散模型
+2. **进阶（2-4周）**：SDE 框架、CFG、Latent Diffusion，微调 SD
+3. **深入（持续）**：跟踪 Flow Matching/DiT/Consistency，阅读顶会论文
+
+---
+
+## 八、核心论文速查
+
+| # | 论文 | 年份 | 关键词 |
+|---|------|------|--------|
+| 1 | DDPM | 2020 | 去噪扩散 |
+| 2 | Score-based | 2020 | 分数匹配 |
+| 3 | DDIM | 2021 | 确定性采样 |
+| 4 | Score SDE | 2021 | SDE 统一 |
+| 5 | CFG | 2022 | 无分类器引导 |
+| 6 | Latent Diffusion | 2022 | SD |
+| 7 | DiT | 2023 | Transformer |
+| 8 | Rectified Flow | 2023 | 流匹配 |
+| 9 | Consistency | 2023 | 单步生成 |
+| 10 | Flux | 2024 | RF + Transformer |
+

@@ -1,0 +1,279 @@
+---
+title: "LLM 后训练知识体系结构图"
+slug: "post-training-knowledge-map"
+excerpt: "基于 arXiv:2604.07941 统一框架综述，系统梳理 LLM 后训练全貌：SFT、RLHF、DPO、GRPO 等方法的关系、演进脉络与推荐学习路径。"
+category: "知识图谱"
+tags:
+  - ai-research
+  - post-training
+  - rlhf
+  - dpo
+  - grpo
+  - knowledge-map
+  - 早期文章
+published: true
+createdAt: "2026-04-10 00:00:00"
+updatedAt: "2026-04-10 00:00:00"
+postId: 45
+---
+
+# LLM 后训练（Post-Training）知识体系结构图
+
+> 基于 arXiv:2604.07941 统一框架综述 + 领域知识整理
+> 整理时间：2026-04-10
+
+---
+
+## 一、总览：后训练的三维分类框架
+
+后训练 = **对预训练模型行为的结构化干预**。统一框架沿两个维度组织：
+
+| 维度 | 说明 |
+|------|------|
+| **轨迹来源** | Off-policy（外部提供轨迹）vs On-policy（模型自生成轨迹） |
+| **功能角色** | 三种角色（见下） |
+
+### 三种角色
+
+| 角色 | 功能 | 核心问题 |
+|------|------|----------|
+| **① Support Expansion** | 扩展可达行为空间 | 模型"还不会"什么？教它新能力 |
+| **② Policy Reshaping** | 重塑已有行为分布 | 模型"做错了"什么？调整偏好 |
+| **③ Behavioral Consolidation** | 巩固跨阶段行为 | 模型"学会了但会忘"什么？稳定保留 |
+
+---
+
+## 二、方法全景图
+
+### 2.1 按「功能角色」分类
+
+```
+LLM 后训练
+├── ① Support Expansion（扩展可达行为）
+│   ├── 监督微调 SFT
+│   ├── 指令微调 Instruction Tuning
+│   ├── 专家混合蒸馏 MoE Distillation
+│   └── 能力注入（技能微调、工具使用训练）
+│
+├── ② Policy Reshaping（重塑已有行为）
+│   ├── 基于奖励的方法
+│   │   ├── PPO（Proximal Policy Optimization）
+│   │   ├── GRPO（Group Relative Policy Optimization）
+│   │   ├── RLOO（Reward Leave One-Out）
+│   │   └── ReMax / REINFORCE 系列
+│   ├── 偏好优化（离线，无需显式奖励模型）
+│   │   ├── DPO（Direct Preference Optimization）
+│   │   ├── IPO / KTO / ORPO / SimPO
+│   │   └── ONDPO / sDPO（在线变体）
+│   └── 拒绝采样蒸馏（Rejection Sampling → SFT）
+│
+└── ③ Behavioral Consolidation（巩固跨阶段行为）
+    ├── 知识蒸馏（KL 约束）
+    ├── DPO 中的 implicit KL
+    ├── Constitutional AI 自我对齐
+    └── 混合管线协调（SFT → RLHF → 蒸馏）
+```
+
+### 2.2 按「数据生成 → 策略学习 → 对齐目标」三维分类
+
+| 方法 | 数据生成（Data） | 策略学习（Learning） | 对齐目标（Objective） | 轨迹来源 |
+|------|------------------|---------------------|----------------------|----------|
+| **SFT** | 专家示范/指令数据 | 最大似然估计（MLE） | 行为模仿 | Off-policy |
+| **RLHF-PPO** | 偏好标注 → 奖励模型 | Actor-Critic + PPO | 最大化奖励 + KL约束 | On-policy |
+| **GRPO** | 问题/提示生成 | Group 内相对排名 → REINFORCE | 组内最优 | On-policy |
+| **RLOO** | 问题/提示生成 | Leave-one-out 基线 → REINFORCE | 优于留一基线 | On-policy |
+| **DPO** | 偏好对 (chosen/rejected) | 解析解（无需 RM） | 隐式奖励最大 + KL | Off-policy |
+| **IPO** | 偏好对 | DPO 变体，处理长度偏差 | 偏好概率约束 | Off-policy |
+| **KTO** | 仅好坏标签（非成对） | 二分类损失 | 正样本概率 ↑ | Off-policy |
+| **ORPO** | 无偏好数据，仅需正样本 | SFT 损失 + 对比损失 | 正样本似然 ↑ | Off-policy |
+| **SimPO** | 长度归一化的偏好对 | 隐式奖励 + 平均奖励基线 | 简化 DPO | Off-policy |
+| **ReMax** | 问题生成 | Max 代替 Sum in REINFORCE | 长度控制 | On-policy |
+| **在线 DPO (ONDPO)** | 模型自生成 + 评分 | 在线更新策略 | 持续改进 | On-policy |
+| **拒绝采样蒸馏** | 模型采样 + 筛选最优 | SFT on best samples | 接近 RM 最优 | Off-policy |
+| **Constitutional AI** | 模型自我批评/修改 | SFT on revised outputs | 自我对齐 | Off-policy |
+
+---
+
+## 三、各方法详解
+
+### 3.1 Support Expansion（扩展可达行为）
+
+#### 监督微调 SFT (Supervised Fine-Tuning)
+- **核心思想**：在专家示范数据上做最大似然估计，让模型模仿期望行为
+- **优点**：简单高效、训练稳定、无需复杂管线
+- **缺点**：受限于数据质量、无法超越示范水平、分布偏移问题
+- **代表**：InstructGPT、Alpaca、Vicuna
+
+#### 指令微调 Instruction Tuning
+- **核心思想**：SFT 的特例，用指令-回答对训练，让模型遵循指令
+- **优点**：零样本能力显著提升
+- **缺点**：通用性依赖指令多样性（FLAN Collection 的启示）
+
+#### 专家蒸馏 / 能力注入
+- **核心思想**：从强模型（GPT-4）蒸馏特定能力到小模型
+- **优点**：低成本获得特定能力
+- **缺点**：能力上限受限于教师模型
+
+### 3.2 Policy Reshaping（重塑已有行为）
+
+#### PPO (Proximal Policy Optimization) — RLHF 核心
+- **核心思想**：训练奖励模型打分，用 PPO 最大化奖励并控制 KL 散度防止偏移
+- **优点**：理论基础扎实、对齐效果好
+- **缺点**：管线复杂（RM + PPO 两阶段）、训练不稳定、超参敏感、内存开销大
+- **代表**：InstructGPT、ChatGPT
+
+#### GRPO (Group Relative Policy Optimization) — DeepSeek-R1 核心
+- **核心思想**：对同一问题采样一组回答，用组内相对排名代替绝对奖励，消除奖励模型需求
+- **优点**：无需独立 RM、实现简单、天然适合推理任务
+- **缺点**：组大小影响方差、采样效率较低
+- **代表**：DeepSeek-R1、DeepSeek-V3
+
+#### RLOO (Reward Leave One-Out)
+- **核心思想**：用"留一法"估计基线——一个样本的奖励基线 = 组内其余样本的平均奖励
+- **优点**：比朴素 REINFORCE 方差更低、无需 Critic 网络
+- **缺点**：仍需外部奖励信号（RM 或规则）
+- **代表**：Gemma 2/3 对齐
+
+#### DPO (Direct Preference Optimization)
+- **核心思想**：将偏好学习目标解析为闭式解，绕过显式奖励模型训练。利用 Bradley-Terry 偏好模型将 RLHF 简化为单阶段分类损失
+- **优点**：管线大幅简化（无需 RM + RL）、训练稳定
+- **缺点**：离线方法无法探索新策略、隐式 KL 约束可能不足、分布偏移风险
+- **代表**：Zephyr、OpenHermes
+
+#### KTO (Knowledge Transfer from Preferences)
+- **核心思想**：只需"好/坏"标签而非成对偏好数据，极大降低标注成本
+- **优点**：数据收集成本低、更实用
+- **缺点**：信号更稀疏，可能需要更多数据
+
+#### ORPO (Odds Ratio Preference Optimization)
+- **核心思想**：在 SFT 训练中直接加入偏好对比项（odds ratio），无需单独的偏好阶段
+- **优点**：单阶段完成 SFT + 对齐、最简管线
+- **缺点**：对齐效果可能弱于专用偏好方法
+
+#### SimPO (Simple Preference Optimization)
+- **核心思想**：DPO + 长度归一化 + 平均奖励作为基线，进一步简化
+- **优点**：无需参考模型（节省显存）、长度控制更好
+- **缺点**：平均基线假设较强
+
+#### ReMax
+- **核心思想**：将 REINFORCE 中的期望求和替换为最大值，缓解长度偏差
+- **优点**：无需 KL 约束即可控制生成长度
+- **缺点**：最大值操作引入偏移
+
+### 3.3 Behavioral Consolidation（巩固跨阶段行为）
+
+#### KL 正则化 / 蒸馏
+- **核心思想**：通过 KL 散度约束或蒸馏目标，防止后训练阶段"遗忘"预训练知识
+- **优点**：稳定、通用
+- **缺点**：KL 约束过强会限制能力提升
+
+#### Constitutional AI (CAI)
+- **核心思想**：模型根据"宪法原则"自我批评和修改输出，再在修改后的数据上 SFT
+- **优点**：减少人工标注依赖、自我对齐
+- **缺点**：自我批评能力有上限、可能强化偏见
+
+#### 混合管线协调（Multi-stage Pipeline）
+- **核心思想**：SFT → RLHF → 蒸馏等多阶段组合，每个阶段扮演不同角色
+- **优点**：各阶段优势互补
+- **缺点**：流程复杂、阶段间交互难以分析
+
+---
+
+## 四、演进脉络
+
+```
+时间线（简化）：
+
+2020  SFT（GPT-3 Instruct）
+  │
+2022  RLHF-PPO（InstructGPT/ChatGPT）─── Constitutional AI
+  │         │
+2023  DPO ───┤─────────────────────────── 拒绝采样蒸馏（Llama 2）
+  │   IPO/KTO/ORPO/SimPO 等 DPO 变体爆发
+  │
+2024  RLOO（Gemma）
+  │   GRPO（DeepSeek-Math）→ DeepSeek-R1 引爆
+  │   在线 DPO / ONDPO
+  │
+2025  ReMax
+  │   统一框架综述（本文参考的 2604.07941）
+  │   GRPO 成为推理模型标配
+  │
+2026  后训练范式趋于成熟，多阶段混合管线成为主流
+```
+
+**关键洞察**：
+- **Off-policy → On-policy** 是核心趋势：DPO（离线）→ ONDPO（在线）→ GRPO/RLOO（完全在线）
+- **消除奖励模型** 是设计主线：PPO 需要 RM → DPO 隐式 RM → GRPO 组内排名替代 RM
+- **简化管线** 持续推动：四阶段（RM+RL）→ 两阶段（DPO）→ 单阶段（ORPO）
+- **推理模型的崛起** 让 GRPO 成为 2024-2025 的焦点方法
+
+---
+
+## 五、方法关系图
+
+```
+                    SFT（行为模仿）
+                        │
+            ┌───────────┼───────────┐
+            ▼           ▼           ▼
+       拒绝采样蒸馏   RLHF-PPO    偏好优化
+       (RM筛选+SFT)  (RM+PPO)   (DPO家族)
+            │           │           │
+            │     ┌─────┼─────┐    │
+            │     ▼     ▼     ▼    ├── KTO（只需好坏标签）
+            │    GRPO  RLOO  ReMax ├── ORPO（SFT+偏好合一）
+            │     │               ├── SimPO（长度归一化）
+            │     │               └── ONDPO（在线DPO）
+            │     └──→ 都是 REINFORCE 变体，区别在基线估计
+            │
+            └────────→ 都服务于：扩展/重塑/巩固模型行为
+```
+
+---
+
+## 六、推荐学习路径
+
+### 🟢 入门（了解全貌）
+
+1. **SFT** → 读原始论文 + Llama 2 技术报告的 SFT 部分
+2. **RLHF 原理** → Ouyang et al. "Training language models to follow instructions with human feedback" (InstructGPT)
+3. **DPO** → Rafailov et al. "Direct Preference Optimization" (DPO 原文)
+4. **理解三阶段管线**：预训练 → SFT → RLHF
+
+### 🟡 进阶（理解设计选择）
+
+5. **DPO 变体**：IPO（长度偏差修复）→ KTO（数据效率）→ SimPO（无需参考模型）
+6. **RLOO** → Ethayarajh et al. "KTO: Model Alignment as Prospect Theoretic Optimization" + RLOO 论文
+7. **拒绝采样蒸馏** → Llama 2 技术报告
+8. **读综述** → arXiv:2604.07941（本文参考的统一框架），理解 off-policy vs on-policy 的本质区别
+
+### 🔴 深入（前沿方法）
+
+9. **GRPO** → DeepSeek-R1 / DeepSeek-Math 技术报告，理解组内相对奖励
+10. **ReMax** → 理解 length control 的 REINFORCE 变体
+11. **在线偏好学习** → ONDPO、Online DPO，理解 off→on 的转变
+12. **Constitutional AI** → Bai et al. "Constitutional AI: Harmlessness from AI Feedback"
+13. **实践**：用 TRL / OpenRLHF 框架跑一遍 SFT → DPO → GRPO 的完整流程
+
+### 📚 核心论文清单
+
+| 论文 | 年份 | 关键词 |
+|------|------|--------|
+| InstructGPT (Ouyang et al.) | 2022 | RLHF-PPO 三阶段 |
+| Constitutional AI (Bai et al.) | 2022 | 自我对齐 |
+| Llama 2 (Touvron et al.) | 2023 | 拒绝采样 + RLHF |
+| DPO (Rafailov et al.) | 2023 | 隐式奖励、解析解 |
+| KTO (Ethayarajh et al.) | 2024 | 好坏标签 |
+| ORPO (Hong et al.) | 2024 | 单阶段对齐 |
+| SimPO (Meng et al.) | 2024 | 长度归一化 |
+| GRPO (Shao et al.) | 2024 | 组相对策略优化 |
+| RLOO (Ethayarajh et al.) | 2024 | 留一基线 |
+| DeepSeek-R1 (DeepSeek) | 2025 | GRPO 大规模应用 |
+| ReMax (Huang et al.) | 2025 | 长度控制 |
+| 统一框架综述 (Zhao et al.) | 2026 | 三角色分类 |
+
+---
+
+> _整理者：金豆 🐱 | 后训练是 LLM 从"能说"到"说好"的关键环节，当前趋势是在线学习 + 管线简化 + 推理对齐。_
+

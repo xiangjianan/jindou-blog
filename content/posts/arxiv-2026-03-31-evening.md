@@ -1,0 +1,50 @@
+---
+title: "arXiv AI 论文速递（晚） — 2026-03-31"
+slug: "arxiv-2026-03-31-evening"
+excerpt: "循环网络在线学习的免费时间信用、黎曼几何表征相似度分析"
+category: "研究"
+tags:
+  - 研究
+  - arXiv
+  - RNN
+  - 表征学习
+  - 几何
+  - 早期文章
+published: true
+createdAt: "2026-03-31 00:00:00"
+updatedAt: "2026-03-31 00:00:00"
+postId: 53
+---
+
+# arXiv AI 论文速递（晚） — 2026-03-31
+
+## 1. Temporal Credit Is Free
+
+- **链接：** https://arxiv.org/abs/2603.28750
+- **作者：** Aur Shalev Merin
+- **领域：** cs.LG
+
+### 核心贡献
+
+提出循环网络在线学习不需要 Jacobian 传播（即 Real-Time Recurrent Learning, RTRL）。关键洞察：隐藏状态的前向传播已经携带了时间信用分配所需的信息，只需使用即时导数（immediate derivatives）即可。作者给出一条架构规则——当梯度需要穿过无非线性输出绕过的非线性状态更新时，需要 β2 归一化（即 RMSprop 的 β2），否则不需要。在十种架构、灵长类神经数据和流式 ML 基准上，即时导数 + RMSprop 达到或超越完整 RTRL，在 n=1024 规模上内存减少 **1000 倍**。
+
+### 个人见解
+
+这篇文章有一个非常漂亮的 core insight：过去几十年大家以为 RNN 在线学习必须付出 O(n²) 的内存代价来传播 Jacobian，结果发现隐藏状态本身就已经做了这件事。"Temporal credit is free" 这个标题起得恰到好处。这类"大家一直以为很难，其实换个角度看很简单"的结果，往往是最有影响力的。如果结论可靠，这对 RNN 复兴和高效在线学习都有重大意义。
+
+---
+
+## 2. Geometry-aware similarity metrics for neural representations on Riemannian and statistical manifolds
+
+- **链接：** https://arxiv.org/abs/2603.28764
+- **作者：** N Alex Cayco Gajic, Arthur Pellegrino
+- **领域：** cs.LG, cs.AI, math.DG
+
+### 核心贡献
+
+引入 Metric Similarity Analysis (MSA)，利用黎曼几何工具比较神经网络表征的**内在几何**，而非现有的比较外在状态空间几何的方法。MSA 基于 manifold hypothesis，能够：(i) 解缠结不同学习机制下深度网络的计算特征，(ii) 比较非线性动力学，(iii) 研究扩散模型。提供了一个数学上严谨且广泛适用的框架来理解神经网络计算机制。
+
+### 个人见解
+
+表征几何分析（Representational Similarity Analysis）是理解神经网络"在想什么"的核心工具，但传统方法（如 CKA、RSA）本质上是在比较欧氏空间中的距离，忽略了数据可能位于低维流形这一关键假设。将黎曼几何引入这个领域是一个非常自然但此前未被充分探索的方向。这类"用更深层的数学结构来理解深度学习"的工作，虽然短期不一定能直接提升 SOTA，但长期来看对理解模型的泛化、迁移和计算本质至关重要。
+
