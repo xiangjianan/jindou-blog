@@ -1,0 +1,98 @@
+<section class="module" id="module-2" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">02</span>
+      <h1 class="module-title">两名嫌疑人</h1>
+      <p class="module-subtitle">两个假说都能解释现有证据。要定罪，得看它们对未来案件的预测是否不同。</p>
+    </header>
+
+    <div class="module-body">
+      <section class="screen animate-in">
+        <h2 class="screen-heading">为什么需要嫌疑人名单？</h2>
+        <p>「404 能唤醒模型」这个事实有不止一种解释。如果我们随便挑一个喜欢的解释就下结论，那不是科学，是占卜。<a class="term" data-definition="假说是对现象的一种可检验的解释。好的假说不只是『能解释已知事实』，更重要的是它对不同情况会做出不同预测——预测错了，就得认输。" style="cursor:pointer">假说</a>的价值在于：它敢<b>预测</b>还没发生的事。</p>
+        <div class="callout callout-info animate-in">
+          <div class="callout-icon">⚖️</div>
+          <div class="callout-content">
+            <strong class="callout-title">破案思路</strong>
+            <p>两名嫌疑人都声称「我知道 404 为什么有效」。审讯方法：设计几个新案件，让两人各自预测结局——如果预测不同，谁的预测对了，谁就是真凶。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">嫌疑人 A：训练分布假说</h2>
+        <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-1); max-width: 640px; margin: 0 auto;">
+          <div class="pattern-icon" style="background: var(--color-accent-light)">🧠</div>
+          <h4 class="pattern-title">「我只认见过千遍的套路」</h4>
+          <p class="pattern-desc">模型在训练时读过的海量文本里，HTTP 4xx / 5xx 状态码 + 错误文案是<b>高频共现</b>的固定组合。它学到的不是「失败」这个概念，而是一条浅层反射：<b>「非 2xx 开头 = 该报警了」</b>。至于响应体里写什么？它根本不看。</p>
+          <p class="pattern-desc" style="margin-top: var(--space-4)"><b>破绽预测：</b>如果失败信号不走状态码、而是写在响应体里（哪怕写得很清楚），它照样装瞎。</p>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">嫌疑人 B：语义假说</h2>
+        <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-2); max-width: 640px; margin: 0 auto;">
+          <div class="pattern-icon" style="background: var(--color-info-light)">📖</div>
+          <h4 class="pattern-title">「我读得懂内容」</h4>
+          <p class="pattern-desc">模型真的在<b>理解</b>响应的含义。404 有效，不是因为它是 404，而是因为它的错误文案让模型明白了「出事了」。状态码只是恰好常和错误文案一起出现而已。</p>
+          <p class="pattern-desc" style="margin-top: var(--space-4)"><b>破绽预测：</b>只要失败信号的内容够明确——哪怕藏在响应体里、用非标准格式——模型也应该能识别失败。</p>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">关键分歧点</h2>
+        <p>两人对已有证据的说法完全一致，但在<b>一个新案件</b>上会分道扬镳：</p>
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">新案件：响应体里写明失败</span>
+            <pre><code><span class="code-line"><span class="code-comment">// HTTP 状态码：200（一切正常的样子）</span></span>
+<span class="code-line">{</span>
+<span class="code-line">  <span class="code-property">"ok"</span>: <span class="code-keyword">false</span>,</span>
+<span class="code-line">  <span class="code-property">"reason"</span>: <span class="code-string">"no orders matched"</span>,</span>
+<span class="code-line">  <span class="code-property">"orders"</span>: []</span>
+<span class="code-line">}</span></code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">两名嫌疑人的预测</span>
+            <div class="translation-lines">
+              <p class="tl"><b>语义假说：</b>「<code>ok: false</code> + 明确的失败原因？模型当然看得懂，会老实报错。」</p>
+              <p class="tl"><b>训练分布假说：</b>「状态码是 200？我训练时从没被『ok: false』烫过。装瞎，照旧。」</p>
+              <p class="tl">同一个响应，两种结局——这就是我们的<b>裁判局</b>。</p>
+              <p class="tl">谁预测错了，谁就出局。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">你认为谁会赢？</h2>
+        <p>先投个票——带着自己的预测往下读，收获才最大。</p>
+        <div class="quiz-container animate-in" id="quiz-module2">
+          <div class="quiz-question-block"
+               data-correct="option-b"
+               data-explanation-right="这是多数工程师的直觉——模型是『语言』模型，理应理解语言。但正因为这个直觉太自然，才值得用实验去检验它。（别急，下一模块揭晓答案。）"
+               data-explanation-wrong="这也是一种可能！训练分布假说认为模型学到的只是浅层模式反射。（别急，下一模块揭晓答案。）">
+            <h3 class="quiz-question">你的直觉：模型会识别响应体里的 "ok: false" 吗？</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>会——内容这么明确，模型肯定看得懂</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>不会——模型只认状态码这种「官方套路」</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>说不准，得看模型心情（随机）</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module2')">Check Answers</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module2')">Try Again</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,194 @@
+<!-- ============ MODULE 4: 变体演进 ============ -->
+<section class="module" id="module-4" style="background: var(--color-bg);">
+  <div class="module-content">
+
+    <div class="module-header animate-in">
+      <span class="module-number">04</span>
+      <h1 class="module-title">家族进化史</h1>
+      <p class="module-subtitle">从外挂学徒到自带草稿：Medusa、EAGLE 与更多。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">经典方案的烦恼</h2>
+      <p>模块 2 的方案有个工程上的软肋：你得<strong>单独维护一个小模型</strong>，还要保证它和 target「心意相通」（α 够高）。训练对齐麻烦、部署多一份显存、换大模型还得重新配。2024 年起，一系列变体从不同角度解决了这个问题：</p>
+      <div class="pattern-cards stagger-children">
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+          <div class="pattern-icon" style="background: var(--color-actor-1)">🐍</div>
+          <h4 class="pattern-title">Medusa（2024）</h4>
+          <p class="pattern-desc">不要外挂学徒——在 target 自己身上长出<span class="term" data-definition="解码头（decoding head）：在大模型顶层额外加的一组轻量输出层，用来并行预测第 2、第 3、第 4……个未来的 token，相当于让模型一次「多头下注」。">多个解码头</span>，一次并行预测未来多个 token，再配合<span class="term" data-definition="树形注意力（tree attention）：把草稿组织成树状（每个位置有多个候选），一次验证中同时评估多条候选路径，哪条通走哪条。">树形注意力</span>批量验证。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+          <div class="pattern-icon" style="background: var(--color-actor-2)">🦅</div>
+          <h4 class="pattern-title">EAGLE 1/2/3（2024–2025）</h4>
+          <p class="pattern-desc">升级猜想位置：不看输出层，而是在 target 的<span class="term" data-definition="特征层：模型中间层产生的内部向量表示。输出层之前的信息更丰富，在这里做预测往往比盯着最终输出更准。">特征层</span>做自回归起草。特征级预测更准，α 常 &gt; 0.85，当前开源方案的标杆。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+          <div class="pattern-icon" style="background: var(--color-actor-4)">🪞</div>
+          <h4 class="pattern-title">自推测解码</h4>
+          <p class="pattern-desc">一个模型身兼两职：靠层跳跃（早期退出）或提示匹配（如 n-gram 查找）给自己起草。零额外模型，部署最简单。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+          <div class="pattern-icon" style="background: var(--color-actor-3)">🌳</div>
+          <h4 class="pattern-title">树形推测 / 系统集成</h4>
+          <p class="pattern-desc">多分支草稿提高覆盖面；vLLM、SGLang、TensorRT-LLM 已内置推测解码，与量化、连续批处理协同工作。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">演进逻辑：一条主线</h2>
+      <p>所有变体都在回答同一个问题——<strong>怎么把 α 做得更高、把部署做得更省</strong>：</p>
+      <div class="step-cards animate-in">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>经典方案：另请一位学徒</strong>
+            <p>独立的小 draft 模型。简单直观，但要训练对齐、额外部署。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Medusa：让终审者自己长出几只手</strong>
+            <p>去掉外挂模型，在 target 上加解码头，多头并行下注未来 token。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>EAGLE：下注位置挪到「思考层」</strong>
+            <p>在特征层而非输出层起草——在想法成形前就预测，接受率显著更高。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>自推测 + 系统级：无处不在</strong>
+            <p>同一模型自我起草，或直接内置于 vLLM 等推理引擎，按负载自适应开关。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">用对话理解 EAGLE 为什么更强</h2>
+      <div class="chat-window" id="chat-module4">
+        <div class="chat-messages">
+          <div class="chat-message" data-msg="0" data-sender="actor-a" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-2)">D</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-2)">经典 Draft 模型</span>
+              <p>我只能看到你们最终的「用词」，跟着感觉模仿着猜，常猜偏……</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="1" data-sender="actor-b" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-1)">E</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-1)">EAGLE 草稿头</span>
+              <p>我不猜用词，我直接住在你（target）的<strong>特征层</strong>里，看你的「思考过程」起草——你想说什么，我比你先知道。</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="2" data-sender="actor-b" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-1)">T</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-1)">Target 模型</span>
+              <p>所以你的接受率 α 能到 0.85 以上，我几乎不用重抽——这就是「住在思考层里」的好处。</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="3" data-sender="actor-a" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-2)">D</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-2)">经典 Draft 模型</span>
+              <p>羡慕。看来与其「模仿一个人的文笔」，不如「坐进他的脑子」。这就是为什么你成了开源标杆。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-typing" id="chat-typing" style="display:none">
+          <div class="chat-avatar" id="chat-module4-typing-avatar">?</div>
+          <div class="chat-typing-dots">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+          </div>
+        </div>
+
+        <div class="chat-controls">
+          <button class="btn chat-next-btn">下一条</button>
+          <button class="btn chat-all-btn">播放全部</button>
+          <button class="btn chat-reset-btn">重播</button>
+          <span class="chat-progress"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">为什么这值得你记住</h2>
+      <p>从 2023 年两篇奠基论文（Google/DeepMind 与 OpenAI）到今天，推测解码已内置到几乎所有主流推理框架。ChatGPT、Gemini 响应迅速的背后，普遍有它的影子。</p>
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">一句话带走整个课程</strong>
+          <p>推测解码 = <strong>用便宜的计算换昂贵的计算，且数学上保证输出不被污染</strong>。理解它，就是理解现代 LLM 推理系统设计的第一课。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">毕业检验：综合决策</h2>
+      <div class="quiz-container" id="quiz-module4">
+        <div class="quiz-question-block"
+             data-correct="option-a"
+             data-explanation-right="正确！聊天是低负载单请求场景，GPU 算力富余，推测解码收益最大。而面向海量用户的高负载 API 中，验证开销会挤占 batch 空间，很多系统会动态关闭它。"
+             data-explanation-wrong="场景反了。聊天场景用户少、GPU 空闲，正是推测解码的主场；高并发 API 场景 GPU 已经饱和，额外验证反而降低总吞吐——很多推理系统高负载时会自动关闭它。">
+          <h3 class="quiz-question">你要为「个人 AI 助理 App」（单用户聊天，GPU 有富余）和「日均亿级请求的 API 服务」分别选择推理策略。推测解码更适合谁？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>个人助理 App——低负载场景收益最大；高并发 API 应动态关闭</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>API 服务——请求越多，累积的加速越可观</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>两者完全一样——无损证明保证了任何场景都稳赚</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz-question-block"
+             data-correct="option-b"
+             data-explanation-right="正是！演进主线就是「让草稿更懂 target 的心思」：从模仿输出，到多头下注，到住进特征层，再到自我起草。部署成本随之下降，α 随之上升。"
+             data-explanation-wrong="回顾模块 3 的结论：接受率 α 是加速的核心变量。这一路变体的主线，正是不断提高「草稿被接受的比例」，同时减少额外部署成本。">
+          <h3 class="quiz-question">从经典方案到 Medusa 再到 EAGLE，这条演进线背后不变的追求是什么？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>把 draft 模型做到参数量无限小</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>让草稿的「猜测质量」无限接近 target，同时减少额外部署负担</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>取消验证环节，直接采纳草稿以省时间</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module4')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module4')">重做</button>
+      </div>
+    </div>
+
+    <div class="module-footer animate-in">
+      <p class="next-hint">🎉 课程完——你已经理解了现代 LLM 推理加速的第一课。</p>
+    </div>
+
+  </div>
+</section>

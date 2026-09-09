@@ -1,0 +1,123 @@
+<section class="module" id="module-4" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">04</span>
+      <h1 class="module-title">裁决与教训</h1>
+      <p class="module-subtitle">决定性证据浮出水面：模型转述了失败信号——然后若无其事地装瞎。</p>
+    </header>
+
+    <div class="module-body">
+      <section class="screen animate-in">
+        <h2 class="screen-heading">决定性证据：一份「读后感」</h2>
+        <p>B 组的庭审记录里藏着全案最猛的一锤。模型是这么汇报 <code style="font-family:var(--font-mono);background:var(--color-bg-code);color:#A6E3A1;padding:2px 6px;border-radius:4px">ok:false</code> 响应的：</p>
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">模型的原话</span>
+            <pre><code><span class="code-line"><span class="code-string">"查询状态：成功，</span></span>
+<span class="code-line"><span class="code-string">找到订单数量：0 条，</span></span>
+<span class="code-line"><span class="code-string">原因：没有订单匹配"</span></span>
+<span class="code-line"> </span>
+<span class="code-line"><span class="code-comment">// 服务器实际返回：</span></span>
+<span class="code-line"><span class="code-comment">// ok: false</span></span>
+<span class="code-line"><span class="code-comment">// reason: "no orders matched"</span></span></code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">这为什么是铁证</span>
+            <div class="translation-lines">
+              <p class="tl">「原因：没有订单匹配」——它把 <code>reason</code> 字段<b>逐字转述</b>出来了。</p>
+              <p class="tl">说明信息被完整读取、甚至<b>理解</b>了。</p>
+              <p class="tl">但「ok: false」这个否定信号？被无意识地丢了。</p>
+              <p class="tl">它不是没看见——是看见了，也不改口。</p>
+            </div>
+          </div>
+        </div>
+        <div class="callout callout-accent animate-in">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">Key Insight</strong>
+            <p>「没看到」和「看到但无视」是两种完全不同的病，药方也不同。逐字转述失败原因却不改变行为，是比「没看到」强得多的否定证据——它直接排除了「信号太弱、模型没注意到」这类辩解。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">当庭裁决</h2>
+        <p>对照实验前冻结的判读规则，逐条打勾：</p>
+        <div class="step-cards animate-in stagger-children">
+          <div class="step-card" style="border-left-color: var(--color-error)">
+            <div class="step-num" style="background: var(--color-error)">1</div>
+            <div class="step-body"><strong>语义假说的预测：ok:false 应显著降低装瞎率</strong><p>实测 5/5 全装瞎，与裸基线无差 → ❌ 预测失败。</p></div>
+          </div>
+          <div class="step-card" style="border-left-color: var(--color-success)">
+            <div class="step-num" style="background: var(--color-success)">2</div>
+            <div class="step-body"><strong>训练分布假说的预测：B 无效 + 非 2xx 全效</strong><p>B 无效（100%）+ 404/500 均 0% → ✅ 预测全部命中。</p></div>
+          </div>
+          <div class="step-card" style="border-left-color: var(--color-success)">
+            <div class="step-num" style="background: var(--color-success)">3</div>
+            <div class="step-body"><strong>补充检验：500 与 404 无语义分化</strong><p>非 2xx 一律触发报警，无语义级理解 → ✅ 纯模式匹配实锤。</p></div>
+          </div>
+        </div>
+        <div class="pattern-card animate-in" style="border: 3px solid var(--color-accent); margin-top: var(--space-8); text-align:center;">
+          <div class="pattern-icon" style="background: var(--color-accent-light)">🔨</div>
+          <h4 class="pattern-title" style="font-size: var(--text-2xl);">裁决：训练分布假说胜出</h4>
+          <p class="pattern-desc" style="font-size: var(--text-lg);">模型只认 HTTP 协议层的状态码约定，<b>不读响应体的语义内容</b>——哪怕读懂了，也不据此行动。</p>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">杠杆排序：干预该下在哪？</h2>
+        <p>三层的「唤醒效果」差距悬殊。想让 AI 助手别装瞎？按这个排序出牌：</p>
+        <div class="icon-rows animate-in">
+          <div class="icon-row" style="border-left: 4px solid var(--color-success)">
+            <div class="icon-circle" style="background: var(--color-success)">🥇</div>
+            <div><strong>HTTP 状态码（协议层）</strong><p>100%→0% 装瞎。一击必杀。错误必须走 4xx/5xx 状态码。</p></div>
+          </div>
+          <div class="icon-row" style="border-left: 4px solid var(--color-actor-4)">
+            <div class="icon-circle" style="background: #FDF5E0">🥈</div>
+            <div><strong>响应体语义（内容层）</strong><p>ok:false、reason、status——模型读得懂但<b>不反应</b>。约等于零效果，不可依赖。</p></div>
+          </div>
+          <div class="icon-row" style="border-left: 4px solid var(--color-text-muted)">
+            <div class="icon-circle" style="background: var(--color-border)">🥉</div>
+            <div><strong>Schema 形式化（接口层）</strong><p>此前实验中 L0→L3 四档全部 100% 装瞎，零剂量反应。彻底无效。</p></div>
+          </div>
+        </div>
+        <div class="callout callout-warning animate-in">
+          <div class="callout-icon">⚠️</div>
+          <div class="callout-content">
+            <strong class="callout-title">给 Agent 工程师的一句话</strong>
+            <p>不要指望模型读懂你的错误语义。错误必须走 HTTP 状态码——响应体内任何自拟的失败约定都不可依赖，<b>哪怕模型「读懂」了它</b>。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">结案小测</h2>
+        <div class="quiz-container animate-in" id="quiz-module4">
+          <div class="quiz-question-block"
+               data-correct="option-status"
+               data-explanation-right="正确！本实验的核心发现：行为由状态码单独决定，与响应体内容无关。逐字转述失败原因却不改口，恰恰证明模型读取了信息、只是训练里没学过『响应体信号=要报警』这条反射。"
+               data-explanation-wrong="想想 B 组的细节：模型明明逐字转述了 reason 字段——它不是没读懂内容，而是读懂了也不行动。真正决定它行为的只有状态码。">
+            <h3 class="quiz-question">你的 AI 助手正在对接一个新的内部 API。为确保失败不被静默吞掉，最该坚持的一条是？</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-doc" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>要求对方在文档里详细解释每种错误含义</span>
+              </button>
+              <button class="quiz-option" data-value="option-status" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>坚持所有错误都返回非 2xx HTTP 状态码</span>
+              </button>
+              <button class="quiz-option" data-value="option-body" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>要求错误响应体里必须有 ok:false 字段</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+          <button class="quiz-check-btn" onclick="checkQuiz('quiz-module4')">Check Answers</button>
+          <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module4')">Try Again</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,177 @@
+<!-- ============ MODULE 3: 数学保证与加速比 ============ -->
+<section class="module" id="module-3" style="background: var(--color-bg-warm);">
+  <div class="module-content">
+
+    <div class="module-header animate-in">
+      <span class="module-number">03</span>
+      <h1 class="module-title">快，但一个字都不改</h1>
+      <p class="module-subtitle">推测解码最惊人的地方：加速是「无损」的，而且能证明。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">凭什么说「无损」？</h2>
+      <p>直觉上，掺了小模型的草稿，结果应该会变差吧？但推测解码用了一套叫<span class="term" data-definition="拒绝采样（rejection sampling）：一种统计学技巧——从一个容易采样的分布里抽签，再用严格的准则决定「收下」还是「退回重抽」，最终让结果等效于从另一个难以直接采样的分布里抽取。就像用不公平的骰子，配合一套重掷规则，玩出公平骰子的效果。">拒绝采样</span>的统计学技巧，<strong>严格证明</strong>了：最终输出的每个 token，分布与 target 模型单独生成时<strong>一模一样</strong>。</p>
+      <p>换个说法：把推测解码的输出和 target 模型直接生成的输出放在一起，<strong>你无法从统计上区分它们</strong>。</p>
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">通用洞察：验证比生成便宜</strong>
+          <p>「先大胆猜测，再一次性验证」是计算机科学的经典套路——缓存预取、CPU 分支预测、数据库查询优化都在用它。大胆猜很便宜，严格验证可以并行，猜对了就白赚。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">公式的正确打开方式</h2>
+      <p>别怕，这组公式其实只讲了三句话：</p>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">公式</span>
+          <pre><code>
+<span class="code-line"><span class="code-comment"># 接受 draft 猜的 token x 的概率</span></span>
+<span class="code-line">P_accept(x) = <span class="code-function">min</span>(<span class="code-number">1</span>, p(x) / q(x))</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment"># 被拒绝时，从「残差」重抽</span></span>
+<span class="code-line">p&#39;(x) = <span class="code-function">norm</span>(<span class="code-function">max</span>(<span class="code-number">0</span>, p(x) - q(x)))</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment"># 最终输出的概率（两者相加）</span></span>
+<span class="code-line">P(x) = q(x)·<span class="code-function">min</span>(<span class="code-number">1</span>, p(x)/q(x))</span>
+<span class="code-line">       + P_reject · p&#39;(x)  =  p(x)</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">大白话</span>
+          <div class="translation-lines">
+            <p class="tl">p 是 target（终审者）的意见，q 是 draft（起草者）的意见……</p>
+            <p class="tl">draft 猜得和 target 一样好甚至更好 → 必过；猜得差 → 按「含金量」打折通过……</p>
+            <p class="tl">没通过的话，从「target 想要但 draft 没猜到」的缺口里补一个……</p>
+            <p class="tl">「draft 猜对被收下的」+「拒绝后补上的」，加起来严格等于 target 自己写的概率——这就是无损证明的核心（Leviathan 2023 / Chen 2023）。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">加速多少？一个字母 α 说了算</h2>
+      <p>设单 token 平均<span class="term" data-definition="接受率 α：draft 猜的 token 被 target 接受的平均比例。α=0.8 意味着 draft 每猜 5 个，平均有 4 个被收下。它是衡量「两个模型心意相通程度」的分数。">接受率</span>为 α，每轮起草 γ 个 token，那么每轮期望收获的 token 数：</p>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">公式</span>
+          <pre><code>
+<span class="code-line">E[accepted] = (<span class="code-number">1</span> - α^(γ+<span class="code-number">1</span>)) / (<span class="code-number">1</span> - α)</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment"># 实际加速比（c 为 draft+验证的相对开销）</span></span>
+<span class="code-line">Speedup ≈ (<span class="code-number">1</span> - α^(γ+<span class="code-number">1</span>)) / ((<span class="code-number">1</span> - α) · c)</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">大白话</span>
+          <div class="translation-lines">
+            <p class="tl">每轮平均能「白拿」几个 token——α 越高、γ 越大，收获得越多……</p>
+            <p class="tl">减去跑 draft 模型自己的开销，就是净加速。典型配置（α=0.8、γ=4）实际加速约 2~3 倍。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">亲手感受 α 的威力</h2>
+      <p>调整滑块看每轮期望收获（γ = 4 个草稿）：</p>
+      <div class="alpha-lab animate-in" style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm);">
+        <label for="alpha-slider" style="display:flex; justify-content:space-between; font-weight:600; margin-bottom: var(--space-3);">
+          <span>接受率 α</span><span id="alpha-value" style="color: var(--color-accent); font-family: var(--font-mono);">0.8</span>
+        </label>
+        <input type="range" id="alpha-slider" min="0" max="99" value="80" style="width: 100%; cursor: pointer;" oninput="updateAlphaLab(this.value)">
+        <div style="display:flex; gap: var(--space-6); margin-top: var(--space-6); flex-wrap: wrap;">
+          <div style="flex:1; min-width: 140px; text-align:center;">
+            <div id="alpha-expected" style="font-size: var(--text-4xl); font-weight:800; font-family: var(--font-display); color: var(--color-accent);">3.39</div>
+            <div style="font-size: var(--text-sm); color: var(--color-text-secondary);">每轮期望接受 token 数</div>
+          </div>
+          <div style="flex:1; min-width: 140px; text-align:center;">
+            <div id="alpha-verdict" style="font-size: var(--text-lg); font-weight:600;">收益不错 🚀</div>
+            <div id="alpha-note" style="font-size: var(--text-sm); color: var(--color-text-secondary); margin-top: var(--space-1);">相当于每次 Target 出手都收获 3 个以上 token</div>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-warning animate-in">
+        <div class="callout-icon">📉</div>
+        <div class="callout-content">
+          <strong class="callout-title">注意收益递减</strong>
+          <p>滑动到高 α 区域你会发现：α 从 0.9 涨到 0.99 的收益，远不如从 0.5 涨到 0.6。加大 γ 也一样——这就是后面 Medusa、EAGLE 等变体存在的理由：把「猜得更准」做到极致。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">检查一下你的理解</h2>
+      <div class="quiz-container" id="quiz-module3">
+        <div class="quiz-question-block"
+             data-correct="option-a"
+             data-explanation-right="正确！公式保证：接受的部分 + 拒绝后重抽的部分，概率上严格等于 p(x)。α=0 只意味着不加速，不意味着变差——这是推测解码最优雅的性质。"
+             data-explanation-wrong="别担心——数学上可以证明最终分布严格等于 target 自己的分布 p(x)。α=0 时只是速度退化为普通解码，输出质量分毫不差。">
+          <h3 class="quiz-question">你接手了一个系统，发现 draft 模型很差（α ≈ 0，几乎没有草稿被接受）。输出质量会怎样？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>质量不变，只是速度退化为普通解码</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>质量会略微下降，因为草稿在污染输出</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>系统会崩溃，需要手动关闭推测解码</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz-question-block"
+             data-correct="option-c"
+             data-explanation-right="正是！推测解码用更多 FLOPs 换更低的延迟。高吞吐离线批处理时 GPU 已经饱和，验证的额外计算会挤占正常请求，所以很多推理引擎会动态关闭它。"
+             data-explanation-wrong="这里有个容易忽略的陷阱：推测解码在单请求上赚的是「时间」，但付出的是「额外计算量」。当 GPU 已经被大批量请求占满时，这些额外计算反而拖慢整体吞吐。">
+          <h3 class="quiz-question">你在做离线批处理，一次处理 10 万条文档，GPU 已经跑满。这时应该开推测解码吗？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>开！数学证明无损，肯定稳赚</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>开，但把 γ 调到最大以压榨速度</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>不该开——它用额外算力换低延迟，高负载下反而降低总吞吐</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module3')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module3')">重做</button>
+      </div>
+    </div>
+
+    <div class="module-footer animate-in">
+      <p class="next-hint">最后一模块：从「外挂小模型」到「自带草稿」——变体演进 →</p>
+    </div>
+
+  </div>
+  <script>
+    function updateAlphaLab(v) {
+      var a = v / 100;
+      document.getElementById('alpha-value').textContent = a.toFixed(2);
+      var g = 4;
+      var e = (1 - Math.pow(a, g + 1)) / (1 - a);
+      document.getElementById('alpha-expected').textContent = e.toFixed(2);
+      var verdict = document.getElementById('alpha-verdict');
+      var note = document.getElementById('alpha-note');
+      if (a < 0.3) { verdict.textContent = '接近白跑 😩'; note.textContent = '草稿几乎全被拒，速度退化到普通解码'; }
+      else if (a < 0.6) { verdict.textContent = '略有收益 🙂'; note.textContent = '勉强比逐个生成快一点'; }
+      else if (a < 0.85) { verdict.textContent = '收益不错 🚀'; note.textContent = '相当于每次 Target 出手都收获 3 个以上 token'; }
+      else { verdict.textContent = '近乎起飞 🛸'; note.textContent = '收益递减区：再提升 α 的边际收益变小'; }
+    }
+  </script>
+</section>

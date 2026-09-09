@@ -1,0 +1,123 @@
+<!-- ============ MODULE 1: 为什么 LLM 生成很慢 ============ -->
+<section class="module" id="module-1" style="background: var(--color-bg-warm);">
+  <div class="module-content">
+
+    <div class="module-header animate-in">
+      <span class="module-number">01</span>
+      <h1 class="module-title">大模型写字，为什么这么慢？</h1>
+      <p class="module-subtitle">在学会加速之前，先搞清楚它慢在哪。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <p>你肯定用过 ChatGPT 这类工具。你有没有注意到一个细节：它的回答是<strong>一个词一个词往外蹦</strong>的，而不是一次性全部出现？</p>
+      <p>这不是为了效果装的。它是真的<strong>只能这样生成</strong>。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">模型在回答时，脑子里只有一个问题</h2>
+      <div class="pattern-cards stagger-children">
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+          <div class="pattern-icon" style="background: var(--color-actor-1)">🎲</div>
+          <h4 class="pattern-title">「下一个词是什么？」</h4>
+          <p class="pattern-desc">语言模型每一步只做一件事：看着已经写出的所有文字，预测<strong>下一个 <span class="term" data-definition="token 是大模型处理文字的最小单位。一个英文单词可能是 1~2 个 token，一个汉字通常是 1~2 个 token。比如「推测解码」大约是 4 个 token。">token</span></strong> 最可能是什么。仅此而已。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+          <div class="pattern-icon" style="background: var(--color-actor-2)">🔁</div>
+          <h4 class="pattern-title">「然后呢？然后再来一遍」</h4>
+          <p class="pattern-desc">把刚猜出的词接到句子后面，再看一遍全文，再猜下一个。这个循环叫<span class="term" data-definition="自回归（autoregressive）：模型的输出会被喂回给它自己当输入，一步一步循环生成。就像滚雪球，每滚一圈都要回头看看整个雪球。">自回归</span>生成。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">一句话 = 几十次「完整的重算」</h2>
+      <p>生成 100 个 token，就要完整跑 100 轮。每一轮都要动用模型里<strong>全部几千亿个参数</strong>——哪怕只为了挤出一个「的」字。</p>
+      <div class="flow-steps animate-in">
+        <div class="flow-step"><div class="flow-step-num">1</div><p>看「今天天气」</p></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="flow-step-num">2</div><p>猜出「真」</p></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="flow-step-num">3</div><p>看「今天天气真」</p></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="flow-step-num">4</div><p>猜出「好」……</p></div>
+      </div>
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">关键瓶颈</strong>
+          <p>这个循环天然是<strong>串行</strong>的：第 50 个词必须等第 49 个词出来才能开始算。模型再大、显卡再快，也快不过「必须一步一步来」这条规则。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">一个日常类比：独臂书法家</h2>
+      <p>想象一位技艺登峰造极的书法家，写得每个字都堪称完美——但他只有一只手，一次只能写一个字，写完还要审视全卷才能落下一笔。文章再急，也得等他一个字一个字磨出来。</p>
+      <p>问题来了：<strong>他真的需要亲自写每一个字吗？</strong></p>
+      <div class="callout callout-info animate-in">
+        <div class="callout-icon">🤔</div>
+        <div class="callout-content">
+          <strong class="callout-title">带着这个问题进入下一模块</strong>
+          <p>推测解码的答案 elegant 得出人意料：让一个「写字快的学徒」先写草稿，书法家只负责<strong>审稿</strong>。而审稿，恰好可以一次性批量完成。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">检查一下你的理解</h2>
+      <div class="quiz-container" id="quiz-module1">
+        <div class="quiz-question-block"
+             data-correct="option-b"
+             data-explanation-right="完全正确！自回归生成是串行循环：每个新 token 都依赖前面所有 token。瓶颈不在「算不动」，而在「必须一个一个排队」。"
+             data-explanation-wrong="不完全是。显卡算力其实常常是空闲的——真正的瓶颈是自回归的串行结构：必须先有前一个 token，才能算下一个。">
+          <h3 class="quiz-question">你的聊天机器人回复很慢。假设显卡没有被其他任务占用，最根本的瓶颈是什么？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>模型的参数太多，单次计算量太大</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>生成必须是串行的：每个词都要等上一个词算完才能开始</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>网络传输回答内容需要时间</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz-question-block"
+             data-correct="option-c"
+             data-explanation-right="没错！验证 4 个候选 token 只需要一次前向传播——因为它们是「同时摆在一起看」的，不像生成那样要排队。这正是推测解码能加速的底层原因，下一模块展开。"
+             data-explanation-wrong="想想书法家的比喻：审稿和写作不一样。模型一次前向传播可以「同时看到」一段文字并给出判断——验证 4 个词和验证 1 个词的成本相差不大。">
+          <h3 class="quiz-question">模型生成 1 个 token 需要一次完整的前向计算。那么它「检查一段已经写好的 4 个 token 是否合理」，大约需要几次？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>4 次，一个一个检查</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>16 次，检查比生成更费力</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>约 1 次——一次前向可以并行地「看」多个 token</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module1')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module1')">重做</button>
+      </div>
+    </div>
+
+    <div class="module-footer animate-in">
+      <p class="next-hint">下一模块：起草与验证——推测解码的核心机制 →</p>
+    </div>
+
+  </div>
+</section>

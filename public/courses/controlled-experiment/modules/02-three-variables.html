@@ -1,0 +1,235 @@
+<section class="module" id="module-2" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+
+    <div class="module-header animate-in">
+      <span class="module-number">02</span>
+      <h2 class="module-title">受控实验三要素</h2>
+      <p class="module-subtitle">把"聪明的园丁"升级为科学方法：自变量、因变量、控制变量。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">三个角色，各司其职</h3>
+      <p>园丁的直觉背后，藏着三个正式概念。用一场实验来认识它们——每个概念都是一个"角色"：</p>
+
+      <div class="pattern-cards animate-in">
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+          <div class="pattern-icon" style="background: var(--color-actor-1)">🎛️</div>
+          <h4 class="pattern-title">自变量 Independent Variable</h4>
+          <p class="pattern-desc">你<strong>主动操纵</strong>的因素——比如"是否施肥"。它是原因的候选者 A，整个实验就为验证它而存在。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+          <div class="pattern-icon" style="background: var(--color-actor-2)">📏</div>
+          <h4 class="pattern-title">因变量 Dependent Variable</h4>
+          <p class="pattern-desc">你<strong>测量</strong>的结果——比如"植株高度"。它是结果 B，"依赖"自变量的变化而得名。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+          <div class="pattern-icon" style="background: var(--color-actor-3)">🔒</div>
+          <h4 class="pattern-title">控制变量 Controlled Variables</h4>
+          <p class="pattern-desc">其他一切可能影响结果的因素——光照、水分、土壤、温度——必须<strong>保持一致</strong>，不许捣乱。</p>
+        </div>
+      </div>
+
+      <p>一个记忆窍门：<strong>自变量是"我改的"，因变量是"我量的"，控制变量是"我按住的"</strong>。三个动词，三个角色。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">你来当实验设计师：拖拽配对</h3>
+      <p>场景：一家奶茶店想验证"把杯子换大一号能不能提高顾客满意度"。下面是实验里的各个元素——把它们拖进正确的角色槽：</p>
+
+      <div class="dnd-container" id="dnd-module2">
+        <div class="dnd-chips">
+          <div class="dnd-chip" draggable="true" data-answer="actor-a">杯子大小</div>
+          <div class="dnd-chip" draggable="true" data-answer="actor-b">顾客满意度评分</div>
+          <div class="dnd-chip" draggable="true" data-answer="actor-c">奶茶配方与甜度</div>
+          <div class="dnd-chip" draggable="true" data-answer="actor-a">广告投放力度</div>
+          <div class="dnd-chip" draggable="true" data-answer="actor-b">回头客比例</div>
+          <div class="dnd-chip" draggable="true" data-answer="actor-c">门店与时段</div>
+        </div>
+        <div class="dnd-zones">
+          <div class="dnd-zone" data-correct="actor-a">
+            <p class="dnd-zone-label">🎛️ 自变量——实验者主动改变的</p>
+            <div class="dnd-zone-target">拖到这里</div>
+          </div>
+          <div class="dnd-zone" data-correct="actor-b">
+            <p class="dnd-zone-label">📏 因变量——被测量、随自变量变化的</p>
+            <div class="dnd-zone-target">拖到这里</div>
+          </div>
+          <div class="dnd-zone" data-correct="actor-c">
+            <p class="dnd-zone-label">🔒 控制变量——必须保持一致的</p>
+            <div class="dnd-zone-target">拖到这里</div>
+          </div>
+        </div>
+        <button onclick="checkDnD('dnd-module2')">检查配对</button>
+        <button onclick="resetDnD('dnd-module2')">重置</button>
+      </div>
+
+      <div class="callout callout-info animate-in">
+        <div class="callout-icon">🧭</div>
+        <div class="callout-content">
+          <strong class="callout-title">怎么判断？</strong>
+          <p>问自己：这是实验者<strong>故意改动</strong>的（自变量）？是拿来<strong>打分测量</strong>的（因变量）？还是必须两边<strong>一模一样</strong>的（控制变量）？同一现实元素在不同实验里角色会变——关键是它在<strong>这个</strong>实验里的职责。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">实验设计图鉴：一场实验的"聊天记录"</h3>
+      <p>把实验想象成一个工作群：实验者发号施令，各变量各自汇报。看它们如何配合：</p>
+
+      <div class="chat-window" id="chat-module2">
+        <div class="chat-messages">
+          <div class="chat-message" data-msg="0" data-sender="experimenter" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-1)">实</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-1)">实验者</span>
+              <p>各位，今天验证新肥料。A 组施肥，B 组不施，开始！</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="1" data-sender="independent" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-1)">自</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-1)">自变量 · 是否施肥</span>
+              <p>收到。我已经只在 A 组生效——全场只有我在变。</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="2" data-sender="controlled" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-3)">控</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-3)">控制变量们</span>
+              <p>光照 6h ☑️ 水分 200ml ☑️ 土壤同批 ☑️ 我们集体保持原样，绝不动。</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="3" data-sender="dependent" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-2)">因</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-2)">因变量 · 植株高度</span>
+              <p>两周后汇报：A 组平均 32cm，B 组 25cm。高了 7cm！</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="4" data-sender="experimenter" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-1)">实</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-1)">实验者</span>
+              <p>其他条件都锁死了，这 7cm 只能是肥料的功劳。结论：肥料有效 ✅</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-typing" id="chat-typing" style="display:none">
+          <div class="chat-avatar" id="chat-module2-typing-avatar">?</div>
+          <div class="chat-typing-dots">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+          </div>
+        </div>
+
+        <div class="chat-controls">
+          <button class="btn chat-next-btn">下一条</button>
+          <button class="btn chat-all-btn">播放全部</button>
+          <button class="btn chat-reset-btn">重播</button>
+          <span class="chat-progress"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">写给 AI 的实验协议</h3>
+      <p>如今很多人让 AI 帮忙设计实验。一份清晰的设计文档，用"代码"写出来是这样的——右边是逐行人话翻译：</p>
+
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">实验设计</span>
+          <pre><code>
+<span class="code-line"><span class="code-keyword">experiment</span> <span class="code-function">验证新肥料</span> {</span>
+<span class="code-line">  <span class="code-property">自变量</span> = 是否施肥   <span class="code-comment">// 唯一改动</span></span>
+<span class="code-line">  <span class="code-property">因变量</span> = 两周后植株高度</span>
+<span class="code-line">  <span class="code-property">控制</span> = [光照, 水分, 土壤, 温度]</span>
+<span class="code-line">  <span class="code-property">A组</span> = 施肥（<span class="code-keyword">实验组</span>）</span>
+<span class="code-line">  <span class="code-property">B组</span> = 不施肥（<span class="code-keyword">对照组</span>）</span>
+<span class="code-line">  <span class="code-keyword">assert</span> 其余条件完全相同</span>
+<span class="code-line">}</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">大白话</span>
+          <div class="translation-lines">
+            <p class="tl">给这场实验起个名字：验证新肥料。</p>
+            <p class="tl">我们唯一主动改变的东西，就是施不施肥。</p>
+            <p class="tl">我们测量的是两周后的植株高度。</p>
+            <p class="tl">其他可能捣乱的因素全部锁死、保持一致。</p>
+            <p class="tl">A 组接受处理，是实验组；B 组是基线，叫对照组。</p>
+            <p class="tl">断言：除此之外两组必须一模一样——这是结论成立的前提。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">对照组为什么重要</strong>
+          <p>没有 B 组，你只知道"施肥后长到 32cm"，却不知道"不施肥会长多高"。对照就像照片里的背景板——没有背景，你无法判断主体是高是矮。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">终极考验：三选一的判断题</h3>
+      <div class="quiz-container" id="quiz-module2">
+        <div class="scenario-block">
+          <div class="scenario-context">
+            <span class="scenario-label">场景</span>
+            <p>一个视频博主想知道"封面带人脸能不能提高播放量"。他准备了同一支视频的 两个版本：A 封面带人脸、B 不带，随机推给观众，其他一切相同。</p>
+          </div>
+          <div class="quiz-question-block"
+               data-correct="option-a"
+               data-explanation-right="完全正确！封面带不带人脸是博主主动操纵的唯一因素——标准的自变量；播放量是被测量的结果。"
+               data-explanation-wrong="注意方向：'我改的'是自变量，'我量的'是因变量。封面是博主主动改的，播放量是被测量的。">
+            <h3 class="quiz-question">这场实验中，"封面是否带人脸"和"播放量"分别是什么？</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>封面是自变量，播放量是因变量</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>封面是因变量，播放量是自变量</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>两者都是控制变量</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-c"
+               data-explanation-right="正是！随机推给观众 = 随机化。这是下一屏的主角——它让已知和未知的混淆因素在两组间大致均匀分布，是实验设计里最强力的工具之一。"
+               data-explanation-wrong="还差一点。关键不在样本量，而在'随机推给观众'这个动作——它保证了两组观众在各种特征上大致均衡。">
+            <h3 class="quiz-question">这位博主的设计里，最关键的方法论步骤是什么？</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>把视频做得足够长，数据更多</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>选粉丝最多的时段发布</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>随机把两个版本推给观众，而不是让观众自选</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+        </div>
+
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module2')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module2')">重做</button>
+      </div>
+    </div>
+
+  </div>
+</section>

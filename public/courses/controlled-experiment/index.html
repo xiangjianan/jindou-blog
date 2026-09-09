@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>相关不是因果：受控对照实验入门</title>
+
+  <!-- Google Fonts: Bricolage Grotesque · DM Sans · JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    :root {
+      --color-accent:       #2A7B9B;
+      --color-accent-hover: #1F6280;
+      --color-accent-light: #E4F2F7;
+      --color-accent-muted: #5A9DB8;
+    }
+  </style>
+
+  <script src="main.js" defer></script>
+</head>
+<body>
+
+  <nav class="nav" id="nav">
+    <div class="progress-bar" id="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    <div class="nav-inner">
+      <span class="nav-title">相关不是因果：受控对照实验</span>
+      <div class="nav-dots" id="nav-dots" role="tablist">
+        <button class="nav-dot" data-target="module-1" data-tooltip="为什么相关不是因果" role="tab" aria-label="Module 1: 为什么相关不是因果"></button>
+        <button class="nav-dot" data-target="module-2" data-tooltip="受控实验三要素" role="tab" aria-label="Module 2: 受控实验三要素"></button>
+        <button class="nav-dot" data-target="module-3" data-tooltip="混淆变量与分层分析" role="tab" aria-label="Module 3: 混淆变量与分层分析"></button>
+        <button class="nav-dot" data-target="module-4" data-tooltip="从 A/B 测试到 ML 实验的陷阱" role="tab" aria-label="Module 4: 从 A/B 测试到 ML 实验的陷阱"></button>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main">
+    <!-- modules/*.html content is assembled here by build.sh -->
+<section class="module" id="module-1" style="background: var(--color-bg)">
+  <div class="module-content">
+
+    <div class="module-header animate-in">
+      <span class="module-number">01</span>
+      <h2 class="module-title">为什么"相关"不等于"因果"</h2>
+      <p class="module-subtitle">两件事总是一起发生，不代表一件导致了另一件。让我们从冰淇淋说起。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">一个经典陷阱：冰淇淋与溺水</h3>
+      <p>统计数据里有一个著名的现象：<span class="term" data-definition="相关（correlation）指两个数字总是一起变高或变低。比如冰淇淋卖得多的日子，溺水事故也多——它们相关，但未必有因果关系。">冰淇淋销量和溺水人数高度相关</span>——冰淇淋卖得越多，溺水的人越多。是冰淇淋害人吗？</p>
+      <p>当然不是。真正的原因藏在幕后：<strong>夏天</strong>。天热 → 人们既买冰淇淋又去游泳 → 两个数字一起涨。冰淇淋和溺水只是"同病相怜的难兄难弟"，它们互相之间没有任何因果关系。</p>
+
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">逻辑推理</span>
+          <pre><code>
+<span class="code-line"><span class="code-keyword">观察到</span> A 与 B 一起出现 {</span>
+<span class="code-line">  <span class="code-property">可能1</span> = A 导致 B</span>
+<span class="code-line">  <span class="code-property">可能2</span> = B 导致 A</span>
+<span class="code-line">  <span class="code-property">可能3</span> = C 同时导致 A 和 B <span class="code-comment">// 混淆</span></span>
+<span class="code-line">  <span class="code-keyword">return</span> <span class="code-string">&apos;无法确定&apos;</span>  <span class="code-comment">// 只看数据</span></span>
+<span class="code-line">}</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">大白话</span>
+          <div class="translation-lines">
+            <p class="tl">看到 A 和 B 总是一起变化，先别激动。</p>
+            <p class="tl">也许是 A 引起了 B——但也许不是。</p>
+            <p class="tl">也可能是反过来，B 才是那个&quot;原因&quot;。</p>
+            <p class="tl">最狡猾的是第三个隐藏角色 C，同时推高两者。</p>
+            <p class="tl">仅凭观察数据，三种可能你分不清——这就是相关性的骗局。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-warning animate-in">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-content">
+          <strong class="callout-title">关键教训</strong>
+          <p>看到 A 和 B 一起变化时，至少有三种可能：A 导致 B、B 导致 A、或者第三个隐藏因素 C 同时导致了 A 和 B。只看数据，你分不清是哪一种。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">园丁的疑问</h3>
+      <p>想象你是个园丁。你给一排花苗施了新肥料，两周后它们比隔壁没施肥的长得高。你能拍胸脯说"是肥料的功劳"吗？</p>
+      <p>先别急——也许它们恰好晒到了更多阳光，也许那块地土壤本来就更肥。我们用一个互动卡片来理清这个局面：</p>
+
+      <div class="arch-diagram animate-in">
+        <div class="arch-zone">
+          <h4 class="arch-zone-label">影响花苗高度的因素</h4>
+          <div class="arch-component" data-desc="🧪 你主动改变的东西：施了新肥料。你希望它能解释高度差。">
+            <div class="arch-icon">🌱</div><span>新肥料</span>
+          </div>
+          <div class="arch-component" data-desc="☀️ 隐藏的混淆因素：施肥那排恰好朝南，晒到的阳光更多——这可能才是长高的真正原因！">
+            <div class="arch-icon">☀️</div><span>阳光</span>
+          </div>
+          <div class="arch-component" data-desc="🪨 隐藏的混淆因素：施肥那块地土壤本来就更肥沃——花苗可能不吃肥料的账。">
+            <div class="arch-icon">🪨</div><span>土壤</span>
+          </div>
+          <div class="arch-component" data-desc="💧 隐藏的混淆因素：如果两组浇水不一样多，高度差也不能全算在肥料头上。">
+            <div class="arch-icon">💧</div><span>浇水</span>
+          </div>
+        </div>
+        <div class="arch-description" id="arch-desc-1">👆 点击每张卡片，看看哪些因素在暗中捣乱</div>
+      </div>
+
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">聪明的园丁怎么做</strong>
+          <p>找两块<strong>一模一样</strong>的地——土质相同、光照相同、浇水相同，唯一的区别是：一块施肥，一块不施。这样一来，任何高度差就<strong>只能</strong>来自肥料。这就是"让其他因素保持不变，只改变你想验证的那一个"。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">小测验：练就一双"因果眼"</h3>
+      <div class="quiz-container" id="quiz-module1">
+        <div class="quiz-question-block"
+             data-correct="option-c"
+             data-explanation-right="正确！健身房常客本来就更有健康意识，饮食可能更清淡、作息更规律——这些混淆因素都能解释生病更少。"
+             data-explanation-wrong="再想想：去健身房的人可能同时拥有其他健康习惯。既然两组人不是'除了健身其他都一样'，就不能急着下结论。">
+          <h3 class="quiz-question">研究发现：常去健身房的人生病更少。以下哪个说法最严谨？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>健身能增强免疫力，证据确凿</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>生病少导致人们更爱去健身房</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>不好说——爱健身的人可能本来就有更健康的生活方式</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz-question-block"
+             data-correct="option-b"
+             data-explanation-right="正是！主动操纵、控制其他条件、只留一个变量——你已经抓住了受控对照实验的精髓，下一模块我们给它起正式名字。"
+             data-explanation-wrong="回忆一下园丁的做法：让两块地除了肥料以外完全一样。只有'只改变一个因素'，差异才能归因于它。">
+          <h3 class="quiz-question">园丁想真正验证肥料的效果，最关键的一步是什么？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>多施一点肥，让效果更明显</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>让两块地除施肥与否外，其他条件完全一致</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>挑选长势最好的花苗来施肥</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module1')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module1')">重做</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+<section class="module" id="module-2" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+
+    <div class="module-header animate-in">
+      <span class="module-number">02</span>
+      <h2 class="module-title">受控实验三要素</h2>
+      <p class="module-subtitle">把"聪明的园丁"升级为科学方法：自变量、因变量、控制变量。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">三个角色，各司其职</h3>
+      <p>园丁的直觉背后，藏着三个正式概念。用一场实验来认识它们——每个概念都是一个"角色"：</p>
+
+      <div class="pattern-cards animate-in">
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+          <div class="pattern-icon" style="background: var(--color-actor-1)">🎛️</div>
+          <h4 class="pattern-title">自变量 Independent Variable</h4>
+          <p class="pattern-desc">你<strong>主动操纵</strong>的因素——比如"是否施肥"。它是原因的候选者 A，整个实验就为验证它而存在。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+          <div class="pattern-icon" style="background: var(--color-actor-2)">📏</div>
+          <h4 class="pattern-title">因变量 Dependent Variable</h4>
+          <p class="pattern-desc">你<strong>测量</strong>的结果——比如"植株高度"。它是结果 B，"依赖"自变量的变化而得名。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+          <div class="pattern-icon" style="background: var(--color-actor-3)">🔒</div>
+          <h4 class="pattern-title">控制变量 Controlled Variables</h4>
+          <p class="pattern-desc">其他一切可能影响结果的因素——光照、水分、土壤、温度——必须<strong>保持一致</strong>，不许捣乱。</p>
+        </div>
+      </div>
+
+      <p>一个记忆窍门：<strong>自变量是"我改的"，因变量是"我量的"，控制变量是"我按住的"</strong>。三个动词，三个角色。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">你来当实验设计师：拖拽配对</h3>
+      <p>场景：一家奶茶店想验证"把杯子换大一号能不能提高顾客满意度"。下面是实验里的各个元素——把它们拖进正确的角色槽：</p>
+
+      <div class="dnd-container" id="dnd-module2">
+        <div class="dnd-chips">
+          <div class="dnd-chip" draggable="true" data-answer="actor-a">杯子大小</div>
+          <div class="dnd-chip" draggable="true" data-answer="actor-b">顾客满意度评分</div>
+          <div class="dnd-chip" draggable="true" data-answer="actor-c">奶茶配方与甜度</div>
+          <div class="dnd-chip" draggable="true" data-answer="actor-a">广告投放力度</div>
+          <div class="dnd-chip" draggable="true" data-answer="actor-b">回头客比例</div>
+          <div class="dnd-chip" draggable="true" data-answer="actor-c">门店与时段</div>
+        </div>
+        <div class="dnd-zones">
+          <div class="dnd-zone" data-correct="actor-a">
+            <p class="dnd-zone-label">🎛️ 自变量——实验者主动改变的</p>
+            <div class="dnd-zone-target">拖到这里</div>
+          </div>
+          <div class="dnd-zone" data-correct="actor-b">
+            <p class="dnd-zone-label">📏 因变量——被测量、随自变量变化的</p>
+            <div class="dnd-zone-target">拖到这里</div>
+          </div>
+          <div class="dnd-zone" data-correct="actor-c">
+            <p class="dnd-zone-label">🔒 控制变量——必须保持一致的</p>
+            <div class="dnd-zone-target">拖到这里</div>
+          </div>
+        </div>
+        <button onclick="checkDnD('dnd-module2')">检查配对</button>
+        <button onclick="resetDnD('dnd-module2')">重置</button>
+      </div>
+
+      <div class="callout callout-info animate-in">
+        <div class="callout-icon">🧭</div>
+        <div class="callout-content">
+          <strong class="callout-title">怎么判断？</strong>
+          <p>问自己：这是实验者<strong>故意改动</strong>的（自变量）？是拿来<strong>打分测量</strong>的（因变量）？还是必须两边<strong>一模一样</strong>的（控制变量）？同一现实元素在不同实验里角色会变——关键是它在<strong>这个</strong>实验里的职责。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">实验设计图鉴：一场实验的"聊天记录"</h3>
+      <p>把实验想象成一个工作群：实验者发号施令，各变量各自汇报。看它们如何配合：</p>
+
+      <div class="chat-window" id="chat-module2">
+        <div class="chat-messages">
+          <div class="chat-message" data-msg="0" data-sender="experimenter" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-1)">实</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-1)">实验者</span>
+              <p>各位，今天验证新肥料。A 组施肥，B 组不施，开始！</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="1" data-sender="independent" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-1)">自</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-1)">自变量 · 是否施肥</span>
+              <p>收到。我已经只在 A 组生效——全场只有我在变。</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="2" data-sender="controlled" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-3)">控</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-3)">控制变量们</span>
+              <p>光照 6h ☑️ 水分 200ml ☑️ 土壤同批 ☑️ 我们集体保持原样，绝不动。</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="3" data-sender="dependent" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-2)">因</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-2)">因变量 · 植株高度</span>
+              <p>两周后汇报：A 组平均 32cm，B 组 25cm。高了 7cm！</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="4" data-sender="experimenter" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-1)">实</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-1)">实验者</span>
+              <p>其他条件都锁死了，这 7cm 只能是肥料的功劳。结论：肥料有效 ✅</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-typing" id="chat-typing" style="display:none">
+          <div class="chat-avatar" id="chat-module2-typing-avatar">?</div>
+          <div class="chat-typing-dots">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+          </div>
+        </div>
+
+        <div class="chat-controls">
+          <button class="btn chat-next-btn">下一条</button>
+          <button class="btn chat-all-btn">播放全部</button>
+          <button class="btn chat-reset-btn">重播</button>
+          <span class="chat-progress"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">写给 AI 的实验协议</h3>
+      <p>如今很多人让 AI 帮忙设计实验。一份清晰的设计文档，用"代码"写出来是这样的——右边是逐行人话翻译：</p>
+
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">实验设计</span>
+          <pre><code>
+<span class="code-line"><span class="code-keyword">experiment</span> <span class="code-function">验证新肥料</span> {</span>
+<span class="code-line">  <span class="code-property">自变量</span> = 是否施肥   <span class="code-comment">// 唯一改动</span></span>
+<span class="code-line">  <span class="code-property">因变量</span> = 两周后植株高度</span>
+<span class="code-line">  <span class="code-property">控制</span> = [光照, 水分, 土壤, 温度]</span>
+<span class="code-line">  <span class="code-property">A组</span> = 施肥（<span class="code-keyword">实验组</span>）</span>
+<span class="code-line">  <span class="code-property">B组</span> = 不施肥（<span class="code-keyword">对照组</span>）</span>
+<span class="code-line">  <span class="code-keyword">assert</span> 其余条件完全相同</span>
+<span class="code-line">}</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">大白话</span>
+          <div class="translation-lines">
+            <p class="tl">给这场实验起个名字：验证新肥料。</p>
+            <p class="tl">我们唯一主动改变的东西，就是施不施肥。</p>
+            <p class="tl">我们测量的是两周后的植株高度。</p>
+            <p class="tl">其他可能捣乱的因素全部锁死、保持一致。</p>
+            <p class="tl">A 组接受处理，是实验组；B 组是基线，叫对照组。</p>
+            <p class="tl">断言：除此之外两组必须一模一样——这是结论成立的前提。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">对照组为什么重要</strong>
+          <p>没有 B 组，你只知道"施肥后长到 32cm"，却不知道"不施肥会长多高"。对照就像照片里的背景板——没有背景，你无法判断主体是高是矮。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">终极考验：三选一的判断题</h3>
+      <div class="quiz-container" id="quiz-module2">
+        <div class="scenario-block">
+          <div class="scenario-context">
+            <span class="scenario-label">场景</span>
+            <p>一个视频博主想知道"封面带人脸能不能提高播放量"。他准备了同一支视频的 两个版本：A 封面带人脸、B 不带，随机推给观众，其他一切相同。</p>
+          </div>
+          <div class="quiz-question-block"
+               data-correct="option-a"
+               data-explanation-right="完全正确！封面带不带人脸是博主主动操纵的唯一因素——标准的自变量；播放量是被测量的结果。"
+               data-explanation-wrong="注意方向：'我改的'是自变量，'我量的'是因变量。封面是博主主动改的，播放量是被测量的。">
+            <h3 class="quiz-question">这场实验中，"封面是否带人脸"和"播放量"分别是什么？</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>封面是自变量，播放量是因变量</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>封面是因变量，播放量是自变量</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>两者都是控制变量</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-c"
+               data-explanation-right="正是！随机推给观众 = 随机化。这是下一屏的主角——它让已知和未知的混淆因素在两组间大致均匀分布，是实验设计里最强力的工具之一。"
+               data-explanation-wrong="还差一点。关键不在样本量，而在'随机推给观众'这个动作——它保证了两组观众在各种特征上大致均衡。">
+            <h3 class="quiz-question">这位博主的设计里，最关键的方法论步骤是什么？</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>把视频做得足够长，数据更多</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>选粉丝最多的时段发布</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>随机把两个版本推给观众，而不是让观众自选</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+        </div>
+
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module2')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module2')">重做</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+<section class="module" id="module-3" style="background: var(--color-bg)">
+  <div class="module-content">
+
+    <div class="module-header animate-in">
+      <span class="module-number">03</span>
+      <h2 class="module-title">混淆变量与分层分析</h2>
+      <p class="module-subtitle">当"其他条件"没法保持一致时，如何把捣乱分子揪出来、关进笼子。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">谁是混淆变量？</h3>
+      <p><span class="term" data-definition="混淆变量（confounder）是同时影响 A 和 B 的第三因素。它能让 A 与 B 之间产生虚假关联——你以为 A 导致 B，其实是它在背后同时推高两者。">混淆变量</span>是同时影响 A 和 B 的第三因素——它就像藏在幕后的提线木偶师，让你以为是 A 在拉动 B。</p>
+      <p>冰淇淋与溺水背后的"夏天"就是典型的混淆变量。现实中还有成千上万个它的兄弟：</p>
+
+      <div class="icon-rows animate-in">
+        <div class="icon-row">
+          <div class="icon-circle" style="background: var(--color-actor-1)">🏥</div>
+          <div>
+            <strong>"常喝红酒的人心脏更健康"</strong>
+            <p>混淆变量：常喝红酒的人往往收入更高、饮食更好、医疗条件更佳</p>
+          </div>
+        </div>
+        <div class="icon-row">
+          <div class="icon-circle" style="background: var(--color-actor-2)">🎓</div>
+          <div>
+            <strong>"上辅导班的学生成绩更高"</strong>
+            <p>混淆变量：报得起辅导班的家庭，往往也更重视教育、有更好的学习环境</p>
+          </div>
+        </div>
+        <div class="icon-row">
+          <div class="icon-circle" style="background: var(--color-actor-4)">☕</div>
+          <div>
+            <strong>"喝咖啡的人心脏病发少"</strong>
+            <p>混淆变量：喝咖啡的多是年轻上班族，本来就年轻健康——年龄把水搅浑了</p>
+          </div>
+        </div>
+      </div>
+
+      <p>对付混淆变量有三大武器，按"数据条件"从好到差排列：</p>
+
+      <div class="step-cards animate-in">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>随机分配（Randomization）</strong>
+            <p>把参与者随机分到实验组和对照组，让混淆因素在两组间大致均匀分布。期望意义上消除一切混淆——包括你没想到的。但小样本时仍可能失衡。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>匹配 / 倾向得分（Matching）</strong>
+            <p>拿不到随机数据时，为处理组的每个个体寻找特征相似的对照。比如给每个喝咖啡的人配一个年龄、性别、职业相同的"不喝咖啡双胞胎"。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>分层分析（Stratification）</strong>
+            <p>按可疑的混淆变量把样本切成层（比如按年龄段），在每层内部比较 A 对 B 的效应，再合并结论。下面的互动会展示它的威力。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">亲眼看翻转：辛普森悖论</h3>
+      <p>1962 年，伯克利分校研究生录取数据看起来性别歧视严重：男生录取率 <strong>44%</strong>，女生只有 <strong>35%</strong>。但把数据按院系分层后，事情彻底翻转了——大多数院系里，女生录取率反而<strong>更高</strong>。</p>
+      <p>怎么回事？女生更多申请了竞争激烈的院系。混淆变量"院系"把总体数字骗了我们。点击按钮，切换视角：</p>
+
+      <div class="layer-demo">
+        <div class="layer-tabs">
+          <button class="layer-tab active" onclick="showLayer('layer-total', this)">总体数据</button>
+          <button class="layer-tab" onclick="showLayer('layer-strata', this)">按院系分层</button>
+        </div>
+        <div class="layer-viewport">
+          <div class="layer" id="layer-total" style="display:block">
+            <div class="quiz-container" style="margin:0">
+              <h3 class="quiz-question">🎓 全校汇总：谁的录取率更高？</h3>
+              <div class="pattern-cards">
+                <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+                  <h4 class="pattern-title">男生 44%</h4>
+                  <p class="pattern-desc">8442 人申请，3738 人录取</p>
+                </div>
+                <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+                  <h4 class="pattern-title">女生 35%</h4>
+                  <p class="pattern-desc">4321 人申请，1512 人录取</p>
+                </div>
+              </div>
+              <p style="font-size: var(--text-sm); color: var(--color-text-secondary)">表面结论：男生录取率高 9 个百分点——疑似歧视？</p>
+            </div>
+          </div>
+          <div class="layer" id="layer-strata" style="display:none">
+            <div class="quiz-container" style="margin:0">
+              <h3 class="quiz-question">🔬 分层后：分院系比较（前 6 大院系）</h3>
+              <div class="badge-list">
+                <div class="badge-item"><code class="badge-code">工学院 A</code><span class="badge-desc">男 62% vs 女 82% —— 女生更高 ⬆️</span></div>
+                <div class="badge-item"><code class="badge-code">理学院 B</code><span class="badge-desc">男 63% vs 女 68% —— 女生更高 ⬆️</span></div>
+                <div class="badge-item"><code class="badge-code">工程学院 C</code><span class="badge-desc">男 37% vs 女 34% —— 基本持平 ➖</span></div>
+                <div class="badge-item"><code class="badge-code">心理学院 D</code><span class="badge-desc">男 33% vs 女 41% —— 女生更高 ⬆️</span></div>
+                <div class="badge-item"><code class="badge-code">文学院 E</code><span class="badge-desc">男 28% vs 女 35% —— 女生更高 ⬆️</span></div>
+                <div class="badge-item"><code class="badge-code">化学院 F</code><span class="badge-desc">男 6% vs 女 7% —— 基本持平 ➖</span></div>
+              </div>
+              <p style="font-size: var(--text-sm); color: var(--color-text-secondary)">真相：女生扎堆申请录取率低的热门院系，总体数字被"院系"这个混淆变量扭曲了。</p>
+            </div>
+          </div>
+        </div>
+        <p class="layer-description">同一份数据，切层前与切层后结论完全相反——这就是为什么混淆变量如此危险，而分层如此重要。</p>
+      </div>
+
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">分层分析</span>
+          <pre><code>
+<span class="code-keyword">for</span> <span class="code-property">层</span> <span class="code-keyword">in</span> <span class="code-function">按混淆变量切分</span>(样本): {</span>
+<span class="code-line">  <span class="code-property">层内效应</span> = <span class="code-function">比较</span>(A 对 B)  <span class="code-comment">// 混淆被锁住</span></span>
+<span class="code-line">}</span>
+<span class="code-line"><span class="code-property">合并结论</span> = <span class="code-function">聚合</span>(所有层内效应)</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">大白话</span>
+          <div class="translation-lines">
+            <p class="tl">先按可疑的混淆变量，把样本切成一层一层。</p>
+            <p class="tl">在同一层里，大家的混淆因素几乎一样，没法捣乱。</p>
+            <p class="tl">于是层内的 A→B 效应终于露出真面目。</p>
+            <p class="tl">最后把各层的结论合并起来，就是更可信的答案。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-warning animate-in">
+        <div class="callout-icon">🌀</div>
+        <div class="callout-content">
+          <strong class="callout-title">辛普森悖论（Simpson&apos;s Paradox）</strong>
+          <p>在每一个分层里 A 都更好，但合在一起却是 B 更好——聚合数据可能讲一个与真相完全相反的故事。只要混淆变量存在，汇总统计就不可信。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">分层不只是"除虫"，还是"探矿"</h3>
+      <p>分层还有一个更深的用途：有时效应在<strong>不同层里本来就不一样</strong>，这叫<span class="term" data-definition="交互效应（interaction effect）指处理的效果随某个因素而变化。比如一种药对年轻人有效、对老年人无效——'药物有效性'与'年龄'存在交互效应。">交互效应</span>。</p>
+      <p>比如一种药物可能对年轻人有效、对老年人无效。如果把两层混在一起平均，可能得出"整体无效"的错误结论——好药就这样被埋没了。</p>
+
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">📋</div>
+        <div class="callout-content">
+          <strong class="callout-title">预先声明，而不是事后挑数据</strong>
+          <p>分层方案必须在实验<strong>开始前</strong>根据理论预期声明。"看完数据再挑一个对自己有利的分层方式"，在统计学里有个臭名昭著的名字：<span class="term" data-definition="p-hacking 指反复尝试不同的分析方式，直到碰出一个'显著'的结果。这不是发现规律，而是在噪声里挑数据——找到的'规律'大概率是巧合。">p-hacking</span>（数据钓鱼）。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">测验：揪出混淆变量</h3>
+      <div class="quiz-container" id="quiz-module3">
+        <div class="scenario-block">
+          <div class="scenario-context">
+            <span class="scenario-label">场景</span>
+            <p>某城市统计发现：自带午餐上班的员工，年度体检指标普遍更好。公司准备发文鼓励员工自带午餐。</p>
+          </div>
+          <div class="quiz-question-block"
+               data-correct="option-c"
+               data-explanation-right="没错！健康意识强的人既倾向于自带午餐、又有更好的体检指标——它同时影响 A 和 B，是标准的混淆变量。"
+               data-explanation-wrong="混淆变量的定义是'同时影响自带午餐和体检指标'。健康状况差可能影响是否带饭，但更完整的答案是'健康意识'——它同时驱动了饮食选择和体检结果。">
+            <h3 class="quiz-question">以下哪个最可能是这组数据里的混淆变量？</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>公司食堂的距离</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>午餐盒的颜色</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>整体健康意识——注重健康的人既带饭又勤体检、多锻炼</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-b"
+               data-explanation-right="正是！交互效应意味着药效在子群体间不同。混在一起平均会把好药'平均没'——按病情分层分析才能看到真相。"
+               data-explanation-wrong="想想交互效应：如果药只对重症患者有效，轻重症混在一个大池子里平均，药效会被轻症患者的'没反应'稀释掉。正确做法是按病情分层。">
+            <h3 class="quiz-question">一种新药整体平均只比安慰剂好 1%，但研究者怀疑它对重症患者特别有效。最该做什么？</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>放弃这药——1% 太小了</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>按病情轻重分层，在各层内部比较药效</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>加大剂量重做实验</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+        </div>
+
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module3')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module3')">重做</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+<section class="module" id="module-4" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+
+    <div class="module-header animate-in">
+      <span class="module-number">04</span>
+      <h2 class="module-title">从 A/B 测试到 ML 实验的陷阱</h2>
+      <p class="module-subtitle">受控对照实验活在你的每一次网购和每一篇 AI 论文里——也死于此。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">A/B 测试：披着科技外衣的老园丁</h3>
+      <p>互联网公司的 <span class="term" data-definition="A/B 测试是把用户随机分成两组、分别看到 A 和 B 两个版本并比较关键指标的实验方法。它就是受控对照实验在互联网上的直系后代。">A/B 测试</span>，就是受控对照实验的直接应用：用户随机分到 A、B 两个版本，比较转化率等指标。看一场典型的 A/B 测试如何流动：</p>
+
+      <div class="flow-animation" data-steps='[
+        {"highlight":"flow-actor-1","label":"用户访问网站——即将成为实验的一部分，虽然他并不知道"},
+        {"highlight":"flow-actor-2","label":"分流系统掷骰子：随机把用户分到 A 组或 B 组（随机分配是灵魂）"},
+        {"highlight":"flow-actor-2","label":"分流完成：A 组看到红色按钮，B 组看到蓝色按钮（唯一差异 = 自变量）","packet":true,"from":"actor-2","to":"actor-1"},
+        {"highlight":"flow-actor-1","label":"用户或点或不点——行为数据被记录下来（点击率 = 因变量）","packet":true,"from":"actor-1","to":"actor-3"},
+        {"highlight":"flow-actor-3","label":"统计引擎比较两组点击率，计算差异是否超出偶然范围"},
+        {"highlight":"flow-actor-3","label":"结论出炉：红色按钮胜出？先看效应量有多大、再看是否显著——下一屏见"}
+      ]'>
+        <div class="flow-actors">
+          <div class="flow-actor" id="flow-actor-1">
+            <div class="flow-actor-icon">👤</div>
+            <span>用户</span>
+          </div>
+          <div class="flow-actor" id="flow-actor-2">
+            <div class="flow-actor-icon">🎲</div>
+            <span>分流系统</span>
+          </div>
+          <div class="flow-actor" id="flow-actor-3">
+            <div class="flow-actor-icon">📊</div>
+            <span>统计引擎</span>
+          </div>
+        </div>
+
+        <div class="flow-packet" id="flow-packet"></div>
+
+        <div class="flow-step-label" id="flow-label">点击"下一步"开始 A/B 测试之旅</div>
+
+        <div class="flow-controls">
+          <button class="btn btn-primary flow-next-btn">下一步</button>
+          <button class="btn flow-reset-btn">重新开始</button>
+          <span class="flow-progress"></span>
+        </div>
+      </div>
+
+      <p>A/B 测试面临与实验室实验一模一样的问题：<strong>样本不齐</strong>、<strong>混淆</strong>（新用户与老用户行为不同）、<strong>交互效应</strong>（某版本只对移动端用户有效）。成熟的应对方案也已就位：<span class="term" data-definition="分层随机（stratified randomization）是先按关键特征（如新老用户、设备类型）分层、再在每层内部随机分配，确保各层都有足够的样本。">分层随机</span>、CUPED <span class="term" data-definition="方差缩减（variance reduction）是用统计技巧降低数据的'噪声'，让更小的真实差异也能被检测出来。CUPED 是业界常用的方法，利用实验前的数据来抵消部分随机波动。">方差缩减</span>、预先注册主要指标等。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">显著 ≠ 重要：p 值的迷思</h3>
+      <p>统计<span class="term" data-definition="统计显著性（p 值）衡量'这个结果由纯粹偶然产生的概率有多大'。p 值小于 0.05 通常被认为'不太像偶然'。但它完全没说效应有多大、重不重要。">显著性</span>只回答"这个效应是否不太像偶然"，<strong>不回答效应有多大</strong>。</p>
+
+      <div class="quiz-container animate-in">
+        <h3 class="quiz-question">💊 一个真实风格的例子</h3>
+        <p>一种新感冒药在 <strong>100,000 人</strong>的大规模实验中"显著"地缩短了感冒病程——平均缩短 <strong>0.1 秒</strong>。技术上无可挑剔，商业上一文不值。</p>
+        <p style="font-size: var(--text-sm); color: var(--color-text-secondary)">规范的做法是同时报告三样东西：</p>
+        <div class="pattern-cards">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <h4 class="pattern-title">效应量</h4>
+            <p class="pattern-desc">效应到底有多大？如 Cohen&apos;s d、相对风险、每单位处理带来的变化。0.1 秒就属于"效应量约等于零"。</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <h4 class="pattern-title">置信区间</h4>
+            <p class="pattern-desc">效应量的不确定范围——"真实值大概率在这个区间里"。区间越窄，估计越可靠。</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+            <h4 class="pattern-title">检验力分析</h4>
+            <p class="pattern-desc">实验前用 <span class="term" data-definition="功效分析（power analysis）是在实验开始前计算'需要多少样本才能可靠检测出预期效应'的方法。样本太少会漏掉真实存在的效应（假阴性）。">功效分析</span>确定样本量，避免实验"看不清"明明存在的效应。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-warning animate-in">
+        <div class="callout-icon">🎯</div>
+        <div class="callout-content">
+          <strong class="callout-title">多重比较陷阱</strong>
+          <p>同时测 20 个指标，总有几个"碰巧显著"——这不是发现，是抛硬币连赢五把。解药：预先注册主要指标，其他都算探索性分析。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">机器学习研究里最常见的"假实验"</h3>
+      <p>ML 论文里常见这样的句式："方法 A 在数据集 X 上比基线高 1 个点，所以 A 更好。"这为什么<strong>不是</strong>受控对照实验？</p>
+      <p>因为<strong>自变量和混淆变量搅在了一起</strong>——换数据集的同时，数据规模、分布、标注质量、评测指标、甚至超参数调优的投入都变了。你根本无法把"方法 A"这个因素单独隔离出来。</p>
+
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">两种研究方式对比</span>
+          <pre><code>
+<span class="code-line"><span class="code-keyword">刷分式</span>（观察性研究）{</span>
+<span class="code-line">  <span class="code-property">数据集</span> = 换成新的     <span class="code-comment">// 变了❗</span></span>
+<span class="code-line">  <span class="code-property">调参预算</span> = 拉满       <span class="code-comment">// 变了❗</span></span>
+<span class="code-line">  <span class="code-property">评测流程</span> = 自定义     <span class="code-comment">// 变了❗</span></span>
+<span class="code-line">  <span class="code-property">方法</span> = 换成 A</span>
+<span class="code-line">  <span class="code-keyword">声称</span>：提升来自方法 A  <span class="code-comment">// 无法证明</span></span>
+<span class="code-line">}</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-keyword">受控对照式</span> {</span>
+<span class="code-line">  <span class="code-property">数据集</span> = 同一批       <span class="code-comment">// 锁死 ✅</span></span>
+<span class="code-line">  <span class="code-property">调参预算</span> = 相同       <span class="code-comment">// 锁死 ✅</span></span>
+<span class="code-line">  <span class="code-property">评测流程</span> = 统一       <span class="code-comment">// 锁死 ✅</span></span>
+<span class="code-line">  <span class="code-property">方法</span> = 换成 A          <span class="code-comment">// 唯一变量</span></span>
+<span class="code-line">}</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">大白话</span>
+          <div class="translation-lines">
+            <p class="tl">刷分式：换数据集、砸调参预算、自定义评测——一切都变了。</p>
+            <p class="tl">这时宣称"方法 A 更好"？不可能——提升可能来自任何一处改动。</p>
+            <p class="tl">这本质上是观察性研究，甚至混入选择性报告。</p>
+            <p class="tl">受控对照式：同一数据、同一评测、同一调参预算。</p>
+            <p class="tl">只换方法 A 这一个变量。</p>
+            <p class="tl">再加上跨多个任务类型的分层验证，排除交互效应——这才是因果纪律。</p>
+          </div>
+        </div>
+      </div>
+
+      <p>真实案例：Schema 形式化干预实验（2026-09）。研究者想验证"对任务描述做结构化处理能否提升完成质量"——<strong>自变量</strong>是形式化程度，<strong>因变量</strong>是任务完成质量，而<strong>任务类型被作为分层变量</strong>：因为预期收益在不同任务类型上不同（交互效应），所以每层内部随机分配，再分层比较。分层依据来自理论预期，在实验前声明——教科书式的操作。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">找茬挑战：这份实验设计烂在哪？</h3>
+      <p>一家公司宣布了新功能上线策略。点你认为<strong>最有问题</strong>的那一行：</p>
+
+      <div class="bug-challenge">
+        <h3>📋 上线决策报告</h3>
+        <div class="bug-code" style="background: var(--color-bg-code); border-radius: var(--radius-md); overflow: hidden;">
+          <div class="bug-line" onclick="checkBugLine(this, false)" data-hint="样本量确实重要，但功效分析缺位的本质问题是'可能漏掉真效应'——还有更致命的问题。">
+            <span class="line-num">1</span><code>我们让老用户先试用新功能两周</code>
+          </div>
+          <div class="bug-line" onclick="checkBugLine(this, false)" data-hint="体验反馈有价值，但它不是'新旧功能体验是否一样'的对照。">
+            <span class="line-num">2</span><code>同时收集他们的使用体验反馈</code>
+          </div>
+          <div class="bug-line" onclick="checkBugLine(this, true)" data-explanation="就是这个！老用户 vs 新功能上线后的全部用户——两组人根本不同（时间不同、人群自选），混淆变量满天飞。这不是实验，是观察。">
+            <span class="line-num">3</span><code>对比"老用户体验期间"和"全量上线后"的留存率，决定是否保留新功能</code>
+          </div>
+          <div class="bug-line" onclick="checkBugLine(this, false)" data-hint="这是好消息，但'有提升'和'提升来自新功能'是两回事。">
+            <span class="line-num">4</span><code>结果显示留存率提升了，团队很高兴</code>
+          </div>
+        </div>
+        <div class="bug-feedback"></div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">毕业测验：整门课的终极三问</h3>
+      <div class="quiz-container" id="quiz-module4">
+        <div class="quiz-question-block"
+             data-correct="option-b"
+             data-explanation-right="完全正确！先声明主要指标（防 p-hacking 与多重比较），再保证样本量（功效分析），随机分层（控混淆）——三步都是'实验前'的功夫。"
+             data-explanation-wrong="关键在时序：防住这些陷阱的动作几乎都要在实验开始前做——事后补救就晚了。">
+          <h3 class="quiz-question">要设计一个靠谱的 A/B 测试，正确的先后顺序是？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>先跑实验看数据，哪个指标好看就主推哪个</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>预先注册主要指标 → 功效分析定样本量 → 随机（最好分层）分配</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>把新版本发给最多的用户，越多越准</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz-question-block"
+             data-correct="option-c"
+             data-explanation-right="正是本课的精髓！同一数据、同一评测、同一调参预算，只换方法——再加跨任务分层验证。差的就是这层因果纪律。"
+             data-explanation-wrong="回忆第 4 屏的对比：只要数据集、调参预算、评测流程里有任何一样跟着方法一起变，提升就说不清来自哪里。">
+          <h3 class="quiz-question">"换数据集刷分"为什么不算受控对照实验？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>因为数据集太小，统计不显著</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>因为深度学习模型无法做随机分配</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>因为数据规模、分布、调参投入同时变了，方法这个自变量无法被隔离</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz-question-block"
+             data-correct="option-a"
+             data-explanation-right="满分毕业！受控实验的逻辑链条一以贯之：随机分配 → 控制混淆 → 预先声明的层内估计效应量 → 显著性判断偶然性 → 用效应量解释价值。每一步都在回答：B 的变化，凭什么归因于 A？"
+             data-explanation-wrong="回到第 4 屏的小结：这五个环节是环环相扣的逻辑链——随机分配在前，分层估计在后，效应量解释收尾。">
+          <h3 class="quiz-question">整门课的逻辑链条，正确顺序是？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>随机分配 → 控制混淆 → 层内估计效应量 → 显著性检验 → 结合效应量解释结果</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>先看数据找规律 → 再做显著性检验 → 最后决定归因</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>先证明显著 → 再做随机化 → 最后分层</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module4')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module4')">重做</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+  </main>
+
+</body>
+</html>

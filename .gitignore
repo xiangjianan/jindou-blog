@@ -1,0 +1,33 @@
+# Nuxt dev/build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
+
+# Node dependencies
+node_modules
+
+# Logs
+logs
+*.log
+
+# Misc
+.DS_Store
+.fleet
+.idea
+
+# Local env files
+.env
+.env.*
+!.env.example
+
+/generated/prisma
+
+# Secrets & runtime data (2026-09-09 迁移时加固，勿提交到公开仓库)
+cookies.txt
+-X
+-i
+*.db
+*.db-journal

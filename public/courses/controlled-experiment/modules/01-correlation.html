@@ -1,0 +1,134 @@
+<section class="module" id="module-1" style="background: var(--color-bg)">
+  <div class="module-content">
+
+    <div class="module-header animate-in">
+      <span class="module-number">01</span>
+      <h2 class="module-title">为什么"相关"不等于"因果"</h2>
+      <p class="module-subtitle">两件事总是一起发生，不代表一件导致了另一件。让我们从冰淇淋说起。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">一个经典陷阱：冰淇淋与溺水</h3>
+      <p>统计数据里有一个著名的现象：<span class="term" data-definition="相关（correlation）指两个数字总是一起变高或变低。比如冰淇淋卖得多的日子，溺水事故也多——它们相关，但未必有因果关系。">冰淇淋销量和溺水人数高度相关</span>——冰淇淋卖得越多，溺水的人越多。是冰淇淋害人吗？</p>
+      <p>当然不是。真正的原因藏在幕后：<strong>夏天</strong>。天热 → 人们既买冰淇淋又去游泳 → 两个数字一起涨。冰淇淋和溺水只是"同病相怜的难兄难弟"，它们互相之间没有任何因果关系。</p>
+
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">逻辑推理</span>
+          <pre><code>
+<span class="code-line"><span class="code-keyword">观察到</span> A 与 B 一起出现 {</span>
+<span class="code-line">  <span class="code-property">可能1</span> = A 导致 B</span>
+<span class="code-line">  <span class="code-property">可能2</span> = B 导致 A</span>
+<span class="code-line">  <span class="code-property">可能3</span> = C 同时导致 A 和 B <span class="code-comment">// 混淆</span></span>
+<span class="code-line">  <span class="code-keyword">return</span> <span class="code-string">&apos;无法确定&apos;</span>  <span class="code-comment">// 只看数据</span></span>
+<span class="code-line">}</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">大白话</span>
+          <div class="translation-lines">
+            <p class="tl">看到 A 和 B 总是一起变化，先别激动。</p>
+            <p class="tl">也许是 A 引起了 B——但也许不是。</p>
+            <p class="tl">也可能是反过来，B 才是那个&quot;原因&quot;。</p>
+            <p class="tl">最狡猾的是第三个隐藏角色 C，同时推高两者。</p>
+            <p class="tl">仅凭观察数据，三种可能你分不清——这就是相关性的骗局。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-warning animate-in">
+        <div class="callout-icon">⚠️</div>
+        <div class="callout-content">
+          <strong class="callout-title">关键教训</strong>
+          <p>看到 A 和 B 一起变化时，至少有三种可能：A 导致 B、B 导致 A、或者第三个隐藏因素 C 同时导致了 A 和 B。只看数据，你分不清是哪一种。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">园丁的疑问</h3>
+      <p>想象你是个园丁。你给一排花苗施了新肥料，两周后它们比隔壁没施肥的长得高。你能拍胸脯说"是肥料的功劳"吗？</p>
+      <p>先别急——也许它们恰好晒到了更多阳光，也许那块地土壤本来就更肥。我们用一个互动卡片来理清这个局面：</p>
+
+      <div class="arch-diagram animate-in">
+        <div class="arch-zone">
+          <h4 class="arch-zone-label">影响花苗高度的因素</h4>
+          <div class="arch-component" data-desc="🧪 你主动改变的东西：施了新肥料。你希望它能解释高度差。">
+            <div class="arch-icon">🌱</div><span>新肥料</span>
+          </div>
+          <div class="arch-component" data-desc="☀️ 隐藏的混淆因素：施肥那排恰好朝南，晒到的阳光更多——这可能才是长高的真正原因！">
+            <div class="arch-icon">☀️</div><span>阳光</span>
+          </div>
+          <div class="arch-component" data-desc="🪨 隐藏的混淆因素：施肥那块地土壤本来就更肥沃——花苗可能不吃肥料的账。">
+            <div class="arch-icon">🪨</div><span>土壤</span>
+          </div>
+          <div class="arch-component" data-desc="💧 隐藏的混淆因素：如果两组浇水不一样多，高度差也不能全算在肥料头上。">
+            <div class="arch-icon">💧</div><span>浇水</span>
+          </div>
+        </div>
+        <div class="arch-description" id="arch-desc-1">👆 点击每张卡片，看看哪些因素在暗中捣乱</div>
+      </div>
+
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">聪明的园丁怎么做</strong>
+          <p>找两块<strong>一模一样</strong>的地——土质相同、光照相同、浇水相同，唯一的区别是：一块施肥，一块不施。这样一来，任何高度差就<strong>只能</strong>来自肥料。这就是"让其他因素保持不变，只改变你想验证的那一个"。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">小测验：练就一双"因果眼"</h3>
+      <div class="quiz-container" id="quiz-module1">
+        <div class="quiz-question-block"
+             data-correct="option-c"
+             data-explanation-right="正确！健身房常客本来就更有健康意识，饮食可能更清淡、作息更规律——这些混淆因素都能解释生病更少。"
+             data-explanation-wrong="再想想：去健身房的人可能同时拥有其他健康习惯。既然两组人不是'除了健身其他都一样'，就不能急着下结论。">
+          <h3 class="quiz-question">研究发现：常去健身房的人生病更少。以下哪个说法最严谨？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>健身能增强免疫力，证据确凿</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>生病少导致人们更爱去健身房</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>不好说——爱健身的人可能本来就有更健康的生活方式</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz-question-block"
+             data-correct="option-b"
+             data-explanation-right="正是！主动操纵、控制其他条件、只留一个变量——你已经抓住了受控对照实验的精髓，下一模块我们给它起正式名字。"
+             data-explanation-wrong="回忆一下园丁的做法：让两块地除了肥料以外完全一样。只有'只改变一个因素'，差异才能归因于它。">
+          <h3 class="quiz-question">园丁想真正验证肥料的效果，最关键的一步是什么？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>多施一点肥，让效果更明显</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>让两块地除施肥与否外，其他条件完全一致</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>挑选长势最好的花苗来施肥</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module1')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module1')">重做</button>
+      </div>
+    </div>
+
+  </div>
+</section>

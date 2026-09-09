@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>推测解码：让大模型快人一步</title>
+
+  <!-- Google Fonts: Bricolage Grotesque · DM Sans · JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    :root {
+      --color-accent:       #D94F30;
+      --color-accent-hover: #C4432A;
+      --color-accent-light: #FDEEE9;
+      --color-accent-muted: #E8836C;
+      --font-display:  'Bricolage Grotesque', 'Noto Sans SC', Georgia, serif;
+      --font-body:     'DM Sans', 'Noto Sans SC', -apple-system, sans-serif;
+    }
+  </style>
+
+  <script src="main.js" defer></script>
+</head>
+<body>
+
+  <nav class="nav" id="nav">
+    <div class="progress-bar" id="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    <div class="nav-inner">
+      <span class="nav-title">推测解码</span>
+      <div class="nav-dots" id="nav-dots" role="tablist">
+        <button class="nav-dot" data-target="module-1" data-tooltip="为什么 LLM 生成很慢" role="tab" aria-label="Module 1"></button>
+        <button class="nav-dot" data-target="module-2" data-tooltip="核心机制：起草与验证" role="tab" aria-label="Module 2"></button>
+        <button class="nav-dot" data-target="module-3" data-tooltip="数学保证与加速比" role="tab" aria-label="Module 3"></button>
+        <button class="nav-dot" data-target="module-4" data-tooltip="变体演进：Medusa 与 EAGLE" role="tab" aria-label="Module 4"></button>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main">
+    <!-- modules/*.html content is assembled here by build.sh -->
+<!-- ============ MODULE 1: 为什么 LLM 生成很慢 ============ -->
+<section class="module" id="module-1" style="background: var(--color-bg-warm);">
+  <div class="module-content">
+
+    <div class="module-header animate-in">
+      <span class="module-number">01</span>
+      <h1 class="module-title">大模型写字，为什么这么慢？</h1>
+      <p class="module-subtitle">在学会加速之前，先搞清楚它慢在哪。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <p>你肯定用过 ChatGPT 这类工具。你有没有注意到一个细节：它的回答是<strong>一个词一个词往外蹦</strong>的，而不是一次性全部出现？</p>
+      <p>这不是为了效果装的。它是真的<strong>只能这样生成</strong>。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">模型在回答时，脑子里只有一个问题</h2>
+      <div class="pattern-cards stagger-children">
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+          <div class="pattern-icon" style="background: var(--color-actor-1)">🎲</div>
+          <h4 class="pattern-title">「下一个词是什么？」</h4>
+          <p class="pattern-desc">语言模型每一步只做一件事：看着已经写出的所有文字，预测<strong>下一个 <span class="term" data-definition="token 是大模型处理文字的最小单位。一个英文单词可能是 1~2 个 token，一个汉字通常是 1~2 个 token。比如「推测解码」大约是 4 个 token。">token</span></strong> 最可能是什么。仅此而已。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+          <div class="pattern-icon" style="background: var(--color-actor-2)">🔁</div>
+          <h4 class="pattern-title">「然后呢？然后再来一遍」</h4>
+          <p class="pattern-desc">把刚猜出的词接到句子后面，再看一遍全文，再猜下一个。这个循环叫<span class="term" data-definition="自回归（autoregressive）：模型的输出会被喂回给它自己当输入，一步一步循环生成。就像滚雪球，每滚一圈都要回头看看整个雪球。">自回归</span>生成。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">一句话 = 几十次「完整的重算」</h2>
+      <p>生成 100 个 token，就要完整跑 100 轮。每一轮都要动用模型里<strong>全部几千亿个参数</strong>——哪怕只为了挤出一个「的」字。</p>
+      <div class="flow-steps animate-in">
+        <div class="flow-step"><div class="flow-step-num">1</div><p>看「今天天气」</p></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="flow-step-num">2</div><p>猜出「真」</p></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="flow-step-num">3</div><p>看「今天天气真」</p></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step"><div class="flow-step-num">4</div><p>猜出「好」……</p></div>
+      </div>
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">关键瓶颈</strong>
+          <p>这个循环天然是<strong>串行</strong>的：第 50 个词必须等第 49 个词出来才能开始算。模型再大、显卡再快，也快不过「必须一步一步来」这条规则。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">一个日常类比：独臂书法家</h2>
+      <p>想象一位技艺登峰造极的书法家，写得每个字都堪称完美——但他只有一只手，一次只能写一个字，写完还要审视全卷才能落下一笔。文章再急，也得等他一个字一个字磨出来。</p>
+      <p>问题来了：<strong>他真的需要亲自写每一个字吗？</strong></p>
+      <div class="callout callout-info animate-in">
+        <div class="callout-icon">🤔</div>
+        <div class="callout-content">
+          <strong class="callout-title">带着这个问题进入下一模块</strong>
+          <p>推测解码的答案 elegant 得出人意料：让一个「写字快的学徒」先写草稿，书法家只负责<strong>审稿</strong>。而审稿，恰好可以一次性批量完成。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">检查一下你的理解</h2>
+      <div class="quiz-container" id="quiz-module1">
+        <div class="quiz-question-block"
+             data-correct="option-b"
+             data-explanation-right="完全正确！自回归生成是串行循环：每个新 token 都依赖前面所有 token。瓶颈不在「算不动」，而在「必须一个一个排队」。"
+             data-explanation-wrong="不完全是。显卡算力其实常常是空闲的——真正的瓶颈是自回归的串行结构：必须先有前一个 token，才能算下一个。">
+          <h3 class="quiz-question">你的聊天机器人回复很慢。假设显卡没有被其他任务占用，最根本的瓶颈是什么？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>模型的参数太多，单次计算量太大</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>生成必须是串行的：每个词都要等上一个词算完才能开始</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>网络传输回答内容需要时间</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz-question-block"
+             data-correct="option-c"
+             data-explanation-right="没错！验证 4 个候选 token 只需要一次前向传播——因为它们是「同时摆在一起看」的，不像生成那样要排队。这正是推测解码能加速的底层原因，下一模块展开。"
+             data-explanation-wrong="想想书法家的比喻：审稿和写作不一样。模型一次前向传播可以「同时看到」一段文字并给出判断——验证 4 个词和验证 1 个词的成本相差不大。">
+          <h3 class="quiz-question">模型生成 1 个 token 需要一次完整的前向计算。那么它「检查一段已经写好的 4 个 token 是否合理」，大约需要几次？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>4 次，一个一个检查</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>16 次，检查比生成更费力</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>约 1 次——一次前向可以并行地「看」多个 token</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module1')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module1')">重做</button>
+      </div>
+    </div>
+
+    <div class="module-footer animate-in">
+      <p class="next-hint">下一模块：起草与验证——推测解码的核心机制 →</p>
+    </div>
+
+  </div>
+</section>
+<!-- ============ MODULE 2: 推测解码核心机制 ============ -->
+<section class="module" id="module-2" style="background: var(--color-bg);">
+  <div class="module-content">
+
+    <div class="module-header animate-in">
+      <span class="module-number">02</span>
+      <h1 class="module-title">起草与验证</h1>
+      <p class="module-subtitle">小模型猜，大模型判——推测解码的双人舞。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">两位角色登场</h2>
+      <div class="icon-rows stagger-children">
+        <div class="icon-row">
+          <div class="icon-circle" style="background: var(--color-actor-2)">✏️</div>
+          <div>
+            <strong>Draft 模型（起草者）</strong>
+            <p>小而快，比如只有 1B 参数。写得不完美，但一个 token 成本只有大模型的几十分之一，能一眨眼连写一串草稿。</p>
+          </div>
+        </div>
+        <div class="icon-row">
+          <div class="icon-circle" style="background: var(--color-actor-1)">🏛️</div>
+          <div>
+            <strong>Target 模型（终审者）</strong>
+            <p>大而强，比如 70B 参数。质量完美，但写得慢。它的关键特长是：<strong>审稿可以批量做</strong>——一次前向传播，同时验证一整串草稿。</p>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">关键洞察</strong>
+          <p>大模型的算力就像一辆大巴：载 1 个人和载 5 个人，油耗差不多。既然生成注定一次只能「开一趟」，不如让小模型先塞满一车候选，让大巴一次验完。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">看两位角色现场对话</h2>
+      <p>用户输入「今天天气真」，看 draft 模型怎么抢答、target 模型怎么裁决：</p>
+      <div class="chat-window" id="chat-module2">
+        <div class="chat-messages">
+          <div class="chat-message" data-msg="0" data-sender="actor-a" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-1)">用</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-1)">用户</span>
+              <p>今天天气真……（帮我把句子续写完）</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="1" data-sender="actor-b" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-2)">D</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-2)">Draft 模型</span>
+              <p>我先猜 4 个：「好」「，」「适」「合」——都归我了？</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="2" data-sender="actor-a" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-1)">T</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-1)">Target 模型</span>
+              <p>别急，我一次性验一下……「好」✓ 接受，「，」✓ 接受，「适」✓ 接受，「合」✗ 这个我要重抽，改成「宜」。</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="3" data-sender="actor-b" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-2)">D</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-2)">Draft 模型</span>
+              <p>收到！那这轮产出 4 个 token：「好，适宜」。我接着从「宜」后面继续猜下一批？</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="4" data-sender="actor-a" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-1)">T</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-1)">Target 模型</span>
+              <p>对。记住规则：<strong>被拒的那个位置由我重新采样，它后面你猜的草稿全部作废</strong>，下一轮重来。质量红线不能破。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-typing" id="chat-typing" style="display:none">
+          <div class="chat-avatar" id="chat-module2-typing-avatar">?</div>
+          <div class="chat-typing-dots">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+          </div>
+        </div>
+
+        <div class="chat-controls">
+          <button class="btn chat-next-btn">下一条</button>
+          <button class="btn chat-all-btn">播放全部</button>
+          <button class="btn chat-reset-btn">重播</button>
+          <span class="chat-progress"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">完整流程，一步一步走</h2>
+      <p>点击「下一步」，追踪一轮 draft-verify 循环：</p>
+      <div class="flow-animation" data-steps='[
+        {"highlight":"flow-actor-1","label":"Draft 模型看着已有文本，快速起草 γ=4 个 token"},
+        {"highlight":"flow-actor-1","label":"草稿 t1~t4 打包发送给 Target","packet":true,"from":"actor-1","to":"actor-2"},
+        {"highlight":"flow-actor-2","label":"Target 一次前向传播，并行验证全部 4 个草稿"},
+        {"highlight":"flow-actor-2","label":"逐个裁决：t1 ✓ 接受，t2 ✓ 接受，t3 ✗ 拒绝！"},
+        {"highlight":"flow-actor-2","label":"被拒的位置由 Target 自己重新采样，产出替代 token"},
+        {"highlight":"flow-actor-2","label":"已接受的 token + 替代 token 打包返回","packet":true,"from":"actor-2","to":"actor-1"},
+        {"highlight":"flow-actor-1","label":"这轮净赚 3 个 token！从新位置继续下一轮起草"}
+      ]'>
+        <div class="flow-actors">
+          <div class="flow-actor" id="flow-actor-1">
+            <div class="flow-actor-icon">✏️</div>
+            <span>Draft</span>
+          </div>
+          <div class="flow-actor" id="flow-actor-2">
+            <div class="flow-actor-icon">🏛️</div>
+            <span>Target</span>
+          </div>
+        </div>
+
+        <div class="flow-packet" id="flow-packet"></div>
+
+        <div class="flow-step-label" id="flow-label">点击「下一步」开始</div>
+
+        <div class="flow-controls">
+          <button class="btn flow-next-btn">下一步</button>
+          <button class="btn flow-reset-btn">重新开始</button>
+          <span class="flow-progress"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">裁决规则，用代码说清楚</h2>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">伪代码</span>
+          <pre><code>
+<span class="code-line"><span class="code-keyword">for</span> draft_token <span class="code-keyword">in</span> draft_tokens:</span>
+<span class="code-line">  r = <span class="code-function">random</span>()  <span class="code-comment"># 0 到 1 的随机数</span></span>
+<span class="code-line">  <span class="code-keyword">if</span> r &lt; <span class="code-function">min</span>(<span class="code-number">1</span>,</span>
+<span class="code-line">        p_target[draft_token] / p_draft[draft_token]):</span>
+<span class="code-line">    <span class="code-function">keep</span>(draft_token)      <span class="code-comment"># 接受</span></span>
+<span class="code-line">  <span class="code-keyword">else</span>:</span>
+<span class="code-line">    <span class="code-function">resample_from</span>(</span>
+<span class="code-line">      <span class="code-function">max</span>(<span class="code-number">0</span>, p_target - p_draft)</span>
+<span class="code-line">    )                       <span class="code-comment"># 拒绝后重采样</span></span>
+<span class="code-line">    <span class="code-keyword">break</span>                  <span class="code-comment"># 后面草稿全部作废</span></span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">大白话</span>
+          <div class="translation-lines">
+            <p class="tl">逐个检查 draft 猜的每个 token……</p>
+            <p class="tl">掷一次骰子来决定是否接受这个 token……</p>
+            <p class="tl">如果 target 也觉得这个 token 不错（两个模型给它的概率越接近，越容易通过），就留下它……</p>
+            <p class="tl">骰子没过？那就不要了……</p>
+            <p class="tl">按「target 想要但 draft 没猜到」的修正分布，重新抽一个替代 token……</p>
+            <p class="tl">第一个被拒的位置之后，剩余草稿全部丢弃——它们的判断已经不可信了。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">检查一下你的理解</h2>
+      <div class="quiz-container" id="quiz-module2">
+        <div class="quiz-question-block"
+             data-correct="option-b"
+             data-explanation-right="正确！Target 验证 4 个 token 仍然只需一次前向传播，这轮相当于「一次计算收获 4 个 token」——这就是加速的本质：把串行生成变成批量验证。"
+             data-explanation-wrong="恰恰相反！全部接受才是最赚的情况：一次前向验证就净得 4 个 token，比逐个生成快了约 4 倍。被拒绝才需要额外重采样。">
+          <h3 class="quiz-question">某轮 draft 猜了 4 个 token，Target 检查后<strong>全部接受</strong>。这一轮「赚」了多少？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>亏了——全部接受说明 draft 不可靠，需要推倒重来</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>大赚——一次前向验证就得到 4 个 target 质量的 token</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>不赚不亏——还是要逐个重新生成一遍确认</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz-question-block"
+             data-correct="option-b"
+             data-explanation-right="正是！接受概率取决于两个模型分布的接近程度。draft 与 target 越「心意相通」，接受率越高，加速越明显——这也为模块 3 的数学公式埋下伏笔。"
+             data-explanation-wrong="想想看：Target 的裁决标准是「我自己会不会这么写」。如果 draft 的风格和 target 接近，它的草稿自然更容易通过。">
+          <h3 class="quiz-question">如果你是工程师，想提高推测解码的效率，最应该优化的方向是什么？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>把 draft 模型换得更小更快，哪怕质量差一点</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>让 draft 的输出分布尽量接近 target——猜得准比跑得快更重要</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>让 target 验证时更宽容一点，别拒那么多</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module2')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module2')">重做</button>
+      </div>
+    </div>
+
+    <div class="module-footer animate-in">
+      <p class="next-hint">下一模块：为什么这套流程「无损」？——数学保证与加速比 →</p>
+    </div>
+
+  </div>
+</section>
+<!-- ============ MODULE 3: 数学保证与加速比 ============ -->
+<section class="module" id="module-3" style="background: var(--color-bg-warm);">
+  <div class="module-content">
+
+    <div class="module-header animate-in">
+      <span class="module-number">03</span>
+      <h1 class="module-title">快，但一个字都不改</h1>
+      <p class="module-subtitle">推测解码最惊人的地方：加速是「无损」的，而且能证明。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">凭什么说「无损」？</h2>
+      <p>直觉上，掺了小模型的草稿，结果应该会变差吧？但推测解码用了一套叫<span class="term" data-definition="拒绝采样（rejection sampling）：一种统计学技巧——从一个容易采样的分布里抽签，再用严格的准则决定「收下」还是「退回重抽」，最终让结果等效于从另一个难以直接采样的分布里抽取。就像用不公平的骰子，配合一套重掷规则，玩出公平骰子的效果。">拒绝采样</span>的统计学技巧，<strong>严格证明</strong>了：最终输出的每个 token，分布与 target 模型单独生成时<strong>一模一样</strong>。</p>
+      <p>换个说法：把推测解码的输出和 target 模型直接生成的输出放在一起，<strong>你无法从统计上区分它们</strong>。</p>
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">通用洞察：验证比生成便宜</strong>
+          <p>「先大胆猜测，再一次性验证」是计算机科学的经典套路——缓存预取、CPU 分支预测、数据库查询优化都在用它。大胆猜很便宜，严格验证可以并行，猜对了就白赚。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">公式的正确打开方式</h2>
+      <p>别怕，这组公式其实只讲了三句话：</p>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">公式</span>
+          <pre><code>
+<span class="code-line"><span class="code-comment"># 接受 draft 猜的 token x 的概率</span></span>
+<span class="code-line">P_accept(x) = <span class="code-function">min</span>(<span class="code-number">1</span>, p(x) / q(x))</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment"># 被拒绝时，从「残差」重抽</span></span>
+<span class="code-line">p&#39;(x) = <span class="code-function">norm</span>(<span class="code-function">max</span>(<span class="code-number">0</span>, p(x) - q(x)))</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment"># 最终输出的概率（两者相加）</span></span>
+<span class="code-line">P(x) = q(x)·<span class="code-function">min</span>(<span class="code-number">1</span>, p(x)/q(x))</span>
+<span class="code-line">       + P_reject · p&#39;(x)  =  p(x)</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">大白话</span>
+          <div class="translation-lines">
+            <p class="tl">p 是 target（终审者）的意见，q 是 draft（起草者）的意见……</p>
+            <p class="tl">draft 猜得和 target 一样好甚至更好 → 必过；猜得差 → 按「含金量」打折通过……</p>
+            <p class="tl">没通过的话，从「target 想要但 draft 没猜到」的缺口里补一个……</p>
+            <p class="tl">「draft 猜对被收下的」+「拒绝后补上的」，加起来严格等于 target 自己写的概率——这就是无损证明的核心（Leviathan 2023 / Chen 2023）。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">加速多少？一个字母 α 说了算</h2>
+      <p>设单 token 平均<span class="term" data-definition="接受率 α：draft 猜的 token 被 target 接受的平均比例。α=0.8 意味着 draft 每猜 5 个，平均有 4 个被收下。它是衡量「两个模型心意相通程度」的分数。">接受率</span>为 α，每轮起草 γ 个 token，那么每轮期望收获的 token 数：</p>
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">公式</span>
+          <pre><code>
+<span class="code-line">E[accepted] = (<span class="code-number">1</span> - α^(γ+<span class="code-number">1</span>)) / (<span class="code-number">1</span> - α)</span>
+<span class="code-line"></span>
+<span class="code-line"><span class="code-comment"># 实际加速比（c 为 draft+验证的相对开销）</span></span>
+<span class="code-line">Speedup ≈ (<span class="code-number">1</span> - α^(γ+<span class="code-number">1</span>)) / ((<span class="code-number">1</span> - α) · c)</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">大白话</span>
+          <div class="translation-lines">
+            <p class="tl">每轮平均能「白拿」几个 token——α 越高、γ 越大，收获得越多……</p>
+            <p class="tl">减去跑 draft 模型自己的开销，就是净加速。典型配置（α=0.8、γ=4）实际加速约 2~3 倍。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">亲手感受 α 的威力</h2>
+      <p>调整滑块看每轮期望收获（γ = 4 个草稿）：</p>
+      <div class="alpha-lab animate-in" style="background: var(--color-surface); border-radius: var(--radius-md); padding: var(--space-6); box-shadow: var(--shadow-sm);">
+        <label for="alpha-slider" style="display:flex; justify-content:space-between; font-weight:600; margin-bottom: var(--space-3);">
+          <span>接受率 α</span><span id="alpha-value" style="color: var(--color-accent); font-family: var(--font-mono);">0.8</span>
+        </label>
+        <input type="range" id="alpha-slider" min="0" max="99" value="80" style="width: 100%; cursor: pointer;" oninput="updateAlphaLab(this.value)">
+        <div style="display:flex; gap: var(--space-6); margin-top: var(--space-6); flex-wrap: wrap;">
+          <div style="flex:1; min-width: 140px; text-align:center;">
+            <div id="alpha-expected" style="font-size: var(--text-4xl); font-weight:800; font-family: var(--font-display); color: var(--color-accent);">3.39</div>
+            <div style="font-size: var(--text-sm); color: var(--color-text-secondary);">每轮期望接受 token 数</div>
+          </div>
+          <div style="flex:1; min-width: 140px; text-align:center;">
+            <div id="alpha-verdict" style="font-size: var(--text-lg); font-weight:600;">收益不错 🚀</div>
+            <div id="alpha-note" style="font-size: var(--text-sm); color: var(--color-text-secondary); margin-top: var(--space-1);">相当于每次 Target 出手都收获 3 个以上 token</div>
+          </div>
+        </div>
+      </div>
+      <div class="callout callout-warning animate-in">
+        <div class="callout-icon">📉</div>
+        <div class="callout-content">
+          <strong class="callout-title">注意收益递减</strong>
+          <p>滑动到高 α 区域你会发现：α 从 0.9 涨到 0.99 的收益，远不如从 0.5 涨到 0.6。加大 γ 也一样——这就是后面 Medusa、EAGLE 等变体存在的理由：把「猜得更准」做到极致。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">检查一下你的理解</h2>
+      <div class="quiz-container" id="quiz-module3">
+        <div class="quiz-question-block"
+             data-correct="option-a"
+             data-explanation-right="正确！公式保证：接受的部分 + 拒绝后重抽的部分，概率上严格等于 p(x)。α=0 只意味着不加速，不意味着变差——这是推测解码最优雅的性质。"
+             data-explanation-wrong="别担心——数学上可以证明最终分布严格等于 target 自己的分布 p(x)。α=0 时只是速度退化为普通解码，输出质量分毫不差。">
+          <h3 class="quiz-question">你接手了一个系统，发现 draft 模型很差（α ≈ 0，几乎没有草稿被接受）。输出质量会怎样？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>质量不变，只是速度退化为普通解码</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>质量会略微下降，因为草稿在污染输出</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>系统会崩溃，需要手动关闭推测解码</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz-question-block"
+             data-correct="option-c"
+             data-explanation-right="正是！推测解码用更多 FLOPs 换更低的延迟。高吞吐离线批处理时 GPU 已经饱和，验证的额外计算会挤占正常请求，所以很多推理引擎会动态关闭它。"
+             data-explanation-wrong="这里有个容易忽略的陷阱：推测解码在单请求上赚的是「时间」，但付出的是「额外计算量」。当 GPU 已经被大批量请求占满时，这些额外计算反而拖慢整体吞吐。">
+          <h3 class="quiz-question">你在做离线批处理，一次处理 10 万条文档，GPU 已经跑满。这时应该开推测解码吗？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>开！数学证明无损，肯定稳赚</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>开，但把 γ 调到最大以压榨速度</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>不该开——它用额外算力换低延迟，高负载下反而降低总吞吐</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module3')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module3')">重做</button>
+      </div>
+    </div>
+
+    <div class="module-footer animate-in">
+      <p class="next-hint">最后一模块：从「外挂小模型」到「自带草稿」——变体演进 →</p>
+    </div>
+
+  </div>
+  <script>
+    function updateAlphaLab(v) {
+      var a = v / 100;
+      document.getElementById('alpha-value').textContent = a.toFixed(2);
+      var g = 4;
+      var e = (1 - Math.pow(a, g + 1)) / (1 - a);
+      document.getElementById('alpha-expected').textContent = e.toFixed(2);
+      var verdict = document.getElementById('alpha-verdict');
+      var note = document.getElementById('alpha-note');
+      if (a < 0.3) { verdict.textContent = '接近白跑 😩'; note.textContent = '草稿几乎全被拒，速度退化到普通解码'; }
+      else if (a < 0.6) { verdict.textContent = '略有收益 🙂'; note.textContent = '勉强比逐个生成快一点'; }
+      else if (a < 0.85) { verdict.textContent = '收益不错 🚀'; note.textContent = '相当于每次 Target 出手都收获 3 个以上 token'; }
+      else { verdict.textContent = '近乎起飞 🛸'; note.textContent = '收益递减区：再提升 α 的边际收益变小'; }
+    }
+  </script>
+</section>
+<!-- ============ MODULE 4: 变体演进 ============ -->
+<section class="module" id="module-4" style="background: var(--color-bg);">
+  <div class="module-content">
+
+    <div class="module-header animate-in">
+      <span class="module-number">04</span>
+      <h1 class="module-title">家族进化史</h1>
+      <p class="module-subtitle">从外挂学徒到自带草稿：Medusa、EAGLE 与更多。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">经典方案的烦恼</h2>
+      <p>模块 2 的方案有个工程上的软肋：你得<strong>单独维护一个小模型</strong>，还要保证它和 target「心意相通」（α 够高）。训练对齐麻烦、部署多一份显存、换大模型还得重新配。2024 年起，一系列变体从不同角度解决了这个问题：</p>
+      <div class="pattern-cards stagger-children">
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+          <div class="pattern-icon" style="background: var(--color-actor-1)">🐍</div>
+          <h4 class="pattern-title">Medusa（2024）</h4>
+          <p class="pattern-desc">不要外挂学徒——在 target 自己身上长出<span class="term" data-definition="解码头（decoding head）：在大模型顶层额外加的一组轻量输出层，用来并行预测第 2、第 3、第 4……个未来的 token，相当于让模型一次「多头下注」。">多个解码头</span>，一次并行预测未来多个 token，再配合<span class="term" data-definition="树形注意力（tree attention）：把草稿组织成树状（每个位置有多个候选），一次验证中同时评估多条候选路径，哪条通走哪条。">树形注意力</span>批量验证。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+          <div class="pattern-icon" style="background: var(--color-actor-2)">🦅</div>
+          <h4 class="pattern-title">EAGLE 1/2/3（2024–2025）</h4>
+          <p class="pattern-desc">升级猜想位置：不看输出层，而是在 target 的<span class="term" data-definition="特征层：模型中间层产生的内部向量表示。输出层之前的信息更丰富，在这里做预测往往比盯着最终输出更准。">特征层</span>做自回归起草。特征级预测更准，α 常 &gt; 0.85，当前开源方案的标杆。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+          <div class="pattern-icon" style="background: var(--color-actor-4)">🪞</div>
+          <h4 class="pattern-title">自推测解码</h4>
+          <p class="pattern-desc">一个模型身兼两职：靠层跳跃（早期退出）或提示匹配（如 n-gram 查找）给自己起草。零额外模型，部署最简单。</p>
+        </div>
+        <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+          <div class="pattern-icon" style="background: var(--color-actor-3)">🌳</div>
+          <h4 class="pattern-title">树形推测 / 系统集成</h4>
+          <p class="pattern-desc">多分支草稿提高覆盖面；vLLM、SGLang、TensorRT-LLM 已内置推测解码，与量化、连续批处理协同工作。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">演进逻辑：一条主线</h2>
+      <p>所有变体都在回答同一个问题——<strong>怎么把 α 做得更高、把部署做得更省</strong>：</p>
+      <div class="step-cards animate-in">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>经典方案：另请一位学徒</strong>
+            <p>独立的小 draft 模型。简单直观，但要训练对齐、额外部署。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>Medusa：让终审者自己长出几只手</strong>
+            <p>去掉外挂模型，在 target 上加解码头，多头并行下注未来 token。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>EAGLE：下注位置挪到「思考层」</strong>
+            <p>在特征层而非输出层起草——在想法成形前就预测，接受率显著更高。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <strong>自推测 + 系统级：无处不在</strong>
+            <p>同一模型自我起草，或直接内置于 vLLM 等推理引擎，按负载自适应开关。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">用对话理解 EAGLE 为什么更强</h2>
+      <div class="chat-window" id="chat-module4">
+        <div class="chat-messages">
+          <div class="chat-message" data-msg="0" data-sender="actor-a" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-2)">D</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-2)">经典 Draft 模型</span>
+              <p>我只能看到你们最终的「用词」，跟着感觉模仿着猜，常猜偏……</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="1" data-sender="actor-b" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-1)">E</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-1)">EAGLE 草稿头</span>
+              <p>我不猜用词，我直接住在你（target）的<strong>特征层</strong>里，看你的「思考过程」起草——你想说什么，我比你先知道。</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="2" data-sender="actor-b" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-1)">T</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-1)">Target 模型</span>
+              <p>所以你的接受率 α 能到 0.85 以上，我几乎不用重抽——这就是「住在思考层里」的好处。</p>
+            </div>
+          </div>
+          <div class="chat-message" data-msg="3" data-sender="actor-a" style="display:none">
+            <div class="chat-avatar" style="background: var(--color-actor-2)">D</div>
+            <div class="chat-bubble">
+              <span class="chat-sender" style="color: var(--color-actor-2)">经典 Draft 模型</span>
+              <p>羡慕。看来与其「模仿一个人的文笔」，不如「坐进他的脑子」。这就是为什么你成了开源标杆。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-typing" id="chat-typing" style="display:none">
+          <div class="chat-avatar" id="chat-module4-typing-avatar">?</div>
+          <div class="chat-typing-dots">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+          </div>
+        </div>
+
+        <div class="chat-controls">
+          <button class="btn chat-next-btn">下一条</button>
+          <button class="btn chat-all-btn">播放全部</button>
+          <button class="btn chat-reset-btn">重播</button>
+          <span class="chat-progress"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">为什么这值得你记住</h2>
+      <p>从 2023 年两篇奠基论文（Google/DeepMind 与 OpenAI）到今天，推测解码已内置到几乎所有主流推理框架。ChatGPT、Gemini 响应迅速的背后，普遍有它的影子。</p>
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">💡</div>
+        <div class="callout-content">
+          <strong class="callout-title">一句话带走整个课程</strong>
+          <p>推测解码 = <strong>用便宜的计算换昂贵的计算，且数学上保证输出不被污染</strong>。理解它，就是理解现代 LLM 推理系统设计的第一课。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h2 class="screen-title">毕业检验：综合决策</h2>
+      <div class="quiz-container" id="quiz-module4">
+        <div class="quiz-question-block"
+             data-correct="option-a"
+             data-explanation-right="正确！聊天是低负载单请求场景，GPU 算力富余，推测解码收益最大。而面向海量用户的高负载 API 中，验证开销会挤占 batch 空间，很多系统会动态关闭它。"
+             data-explanation-wrong="场景反了。聊天场景用户少、GPU 空闲，正是推测解码的主场；高并发 API 场景 GPU 已经饱和，额外验证反而降低总吞吐——很多推理系统高负载时会自动关闭它。">
+          <h3 class="quiz-question">你要为「个人 AI 助理 App」（单用户聊天，GPU 有富余）和「日均亿级请求的 API 服务」分别选择推理策略。推测解码更适合谁？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>个人助理 App——低负载场景收益最大；高并发 API 应动态关闭</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>API 服务——请求越多，累积的加速越可观</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>两者完全一样——无损证明保证了任何场景都稳赚</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <div class="quiz-question-block"
+             data-correct="option-b"
+             data-explanation-right="正是！演进主线就是「让草稿更懂 target 的心思」：从模仿输出，到多头下注，到住进特征层，再到自我起草。部署成本随之下降，α 随之上升。"
+             data-explanation-wrong="回顾模块 3 的结论：接受率 α 是加速的核心变量。这一路变体的主线，正是不断提高「草稿被接受的比例」，同时减少额外部署成本。">
+          <h3 class="quiz-question">从经典方案到 Medusa 再到 EAGLE，这条演进线背后不变的追求是什么？</h3>
+          <div class="quiz-options">
+            <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>把 draft 模型做到参数量无限小</span>
+            </button>
+            <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>让草稿的「猜测质量」无限接近 target，同时减少额外部署负担</span>
+            </button>
+            <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+              <div class="quiz-option-radio"></div>
+              <span>取消验证环节，直接采纳草稿以省时间</span>
+            </button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module4')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module4')">重做</button>
+      </div>
+    </div>
+
+    <div class="module-footer animate-in">
+      <p class="next-hint">🎉 课程完——你已经理解了现代 LLM 推理加速的第一课。</p>
+    </div>
+
+  </div>
+</section>
+  </main>
+
+</body>
+</html>

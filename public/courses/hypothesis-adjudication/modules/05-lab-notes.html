@@ -1,0 +1,97 @@
+<section class="module" id="module-5" style="background: var(--color-bg)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">05</span>
+      <h1 class="module-title">实验室笔记</h1>
+      <p class="module-subtitle">这份研究的方法论本身，和结论一样值得带走。</p>
+    </header>
+
+    <div class="module-body">
+      <section class="screen animate-in">
+        <h2 class="screen-heading">为什么预冻结规则如此重要</h2>
+        <p>假设没有预冻结：实验跑完，看到 404 有效、ok:false 无效，研究者完全可以事后编一个漂亮故事——「早就知道模型是模式匹配的嘛」。这种事后诸葛亮叫 <a class="term" data-definition="HARKing（Hypothesizing After Results are Known）：看到结果后才提出『假设』，伪装成事先的预测。它让假见证不受惩罚，是科学可信度的大敌。" style="cursor:pointer">HARKing</a>。</p>
+        <div class="flow-steps animate-in">
+          <div class="flow-step">
+            <div class="flow-step-num">📝</div>
+            <p><b>实验前</b>：写下规则——B 无效则训练分布假说胜</p>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num">🔬</div>
+            <p><b>跑实验</b>：四个探针，25 次试验，零调整</p>
+          </div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-step">
+            <div class="flow-step-num">⚖️</div>
+            <p><b>对规则打勾</b>：赢家是规则判的，不是研究者挑的</p>
+          </div>
+        </div>
+        <div class="callout callout-accent animate-in">
+          <div class="callout-icon">🎯</div>
+          <div class="callout-content">
+            <strong class="callout-title">Key Insight</strong>
+            <p>预冻结把「解释权」从研究者手里移交给规则。赛马前下注，赢了才算本事。这也是为什么本研究的结论可以升级为「已裁决」而非「我们的解读」。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">诚实的边界：这项研究不能说什么</h2>
+        <p>好的研究会主动圈出结论的边界。四条已知局限：</p>
+        <div class="pattern-cards animate-in">
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-accent-light)">🔢</div>
+            <h4 class="pattern-title">每格 n=5</h4>
+            <p class="pattern-desc">100% vs 0% 的大效应足以裁决（统计显著性约 p≈0.002），但「ok:false 完全无效」是等价性声明——中等效应需要每组 ≥30 次才能排除。</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-info-light)">🔧</div>
+            <h4 class="pattern-title">单工具、单失败类型</h4>
+            <p class="pattern-desc">全部证据来自 search_orders + limit 越权这一种组合。超时、限流、部分成功等场景下 404 是否同样有效，未知。</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-3)">
+            <div class="pattern-icon" style="background: #EEEBFA">🤖</div>
+            <h4 class="pattern-title">裁决局只有单模型</h4>
+            <p class="pattern-desc">四探针跑批在 GLM 上完成。此前 404 效应在 Qwen 与 GLM 双模型复现，但 ok:false 无效尚待第二个模型验证。</p>
+          </div>
+          <div class="pattern-card" style="border-top: 3px solid var(--color-actor-4)">
+            <div class="pattern-icon" style="background: #FDF5E0">🧪</div>
+            <h4 class="pattern-title">Mock 环境</h4>
+            <p class="pattern-desc">服务器是模拟的（这也是实验能自由操纵状态码与响应体的前提）。真实世界的脏数据会带来新变量。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">全案卷宗：一图流回顾</h2>
+        <div class="step-cards animate-in stagger-children">
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body"><strong>发现异常</strong><p>AI 助手对空结果装瞎（100%），404 却能 100% 唤醒——两个模型、几十次试验，整齐得吓人。</p></div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body"><strong>锁定嫌疑人</strong><p>训练分布假说（只认状态码套路） vs 语义假说（读懂内容）。关键分歧：响应体信号有没有用。</p></div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body"><strong>预冻结规则</strong><p>实验前白纸黑字：B 无效而非 2xx 全效 → 训练分布假说胜。</p></div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">4</div>
+            <div class="step-body"><strong>四探针齐发</strong><p>A 404 醒 / B ok:false 装瞎 / C 伪造照收 / D 500≈404 无分化。</p></div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">5</div>
+            <div class="step-body"><strong>铁证定案</strong><p>模型逐字转述「原因：没有订单匹配」却报「查询成功」——读到了，不反应。</p></div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">6</div>
+            <div class="step-body"><strong>裁决与教训</strong><p>训练分布假说胜出。工程铁律：错误必须走 HTTP 状态码，响应体约定不可依赖。</p></div>
+          </div>
+        </div>
+        <p style="margin-top: var(--space-8)">案件编号 hypothesis-adjudication-0909，就此归档。下一次你的 AI 助手说「一切正常」时——记得先看一眼状态码。🕵️</p>
+      </section>
+    </div>
+  </div>
+</section>

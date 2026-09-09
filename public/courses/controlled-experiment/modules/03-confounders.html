@@ -1,0 +1,214 @@
+<section class="module" id="module-3" style="background: var(--color-bg)">
+  <div class="module-content">
+
+    <div class="module-header animate-in">
+      <span class="module-number">03</span>
+      <h2 class="module-title">混淆变量与分层分析</h2>
+      <p class="module-subtitle">当"其他条件"没法保持一致时，如何把捣乱分子揪出来、关进笼子。</p>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">谁是混淆变量？</h3>
+      <p><span class="term" data-definition="混淆变量（confounder）是同时影响 A 和 B 的第三因素。它能让 A 与 B 之间产生虚假关联——你以为 A 导致 B，其实是它在背后同时推高两者。">混淆变量</span>是同时影响 A 和 B 的第三因素——它就像藏在幕后的提线木偶师，让你以为是 A 在拉动 B。</p>
+      <p>冰淇淋与溺水背后的"夏天"就是典型的混淆变量。现实中还有成千上万个它的兄弟：</p>
+
+      <div class="icon-rows animate-in">
+        <div class="icon-row">
+          <div class="icon-circle" style="background: var(--color-actor-1)">🏥</div>
+          <div>
+            <strong>"常喝红酒的人心脏更健康"</strong>
+            <p>混淆变量：常喝红酒的人往往收入更高、饮食更好、医疗条件更佳</p>
+          </div>
+        </div>
+        <div class="icon-row">
+          <div class="icon-circle" style="background: var(--color-actor-2)">🎓</div>
+          <div>
+            <strong>"上辅导班的学生成绩更高"</strong>
+            <p>混淆变量：报得起辅导班的家庭，往往也更重视教育、有更好的学习环境</p>
+          </div>
+        </div>
+        <div class="icon-row">
+          <div class="icon-circle" style="background: var(--color-actor-4)">☕</div>
+          <div>
+            <strong>"喝咖啡的人心脏病发少"</strong>
+            <p>混淆变量：喝咖啡的多是年轻上班族，本来就年轻健康——年龄把水搅浑了</p>
+          </div>
+        </div>
+      </div>
+
+      <p>对付混淆变量有三大武器，按"数据条件"从好到差排列：</p>
+
+      <div class="step-cards animate-in">
+        <div class="step-card">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <strong>随机分配（Randomization）</strong>
+            <p>把参与者随机分到实验组和对照组，让混淆因素在两组间大致均匀分布。期望意义上消除一切混淆——包括你没想到的。但小样本时仍可能失衡。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <strong>匹配 / 倾向得分（Matching）</strong>
+            <p>拿不到随机数据时，为处理组的每个个体寻找特征相似的对照。比如给每个喝咖啡的人配一个年龄、性别、职业相同的"不喝咖啡双胞胎"。</p>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <strong>分层分析（Stratification）</strong>
+            <p>按可疑的混淆变量把样本切成层（比如按年龄段），在每层内部比较 A 对 B 的效应，再合并结论。下面的互动会展示它的威力。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">亲眼看翻转：辛普森悖论</h3>
+      <p>1962 年，伯克利分校研究生录取数据看起来性别歧视严重：男生录取率 <strong>44%</strong>，女生只有 <strong>35%</strong>。但把数据按院系分层后，事情彻底翻转了——大多数院系里，女生录取率反而<strong>更高</strong>。</p>
+      <p>怎么回事？女生更多申请了竞争激烈的院系。混淆变量"院系"把总体数字骗了我们。点击按钮，切换视角：</p>
+
+      <div class="layer-demo">
+        <div class="layer-tabs">
+          <button class="layer-tab active" onclick="showLayer('layer-total', this)">总体数据</button>
+          <button class="layer-tab" onclick="showLayer('layer-strata', this)">按院系分层</button>
+        </div>
+        <div class="layer-viewport">
+          <div class="layer" id="layer-total" style="display:block">
+            <div class="quiz-container" style="margin:0">
+              <h3 class="quiz-question">🎓 全校汇总：谁的录取率更高？</h3>
+              <div class="pattern-cards">
+                <div class="pattern-card" style="border-top: 3px solid var(--color-actor-1)">
+                  <h4 class="pattern-title">男生 44%</h4>
+                  <p class="pattern-desc">8442 人申请，3738 人录取</p>
+                </div>
+                <div class="pattern-card" style="border-top: 3px solid var(--color-actor-2)">
+                  <h4 class="pattern-title">女生 35%</h4>
+                  <p class="pattern-desc">4321 人申请，1512 人录取</p>
+                </div>
+              </div>
+              <p style="font-size: var(--text-sm); color: var(--color-text-secondary)">表面结论：男生录取率高 9 个百分点——疑似歧视？</p>
+            </div>
+          </div>
+          <div class="layer" id="layer-strata" style="display:none">
+            <div class="quiz-container" style="margin:0">
+              <h3 class="quiz-question">🔬 分层后：分院系比较（前 6 大院系）</h3>
+              <div class="badge-list">
+                <div class="badge-item"><code class="badge-code">工学院 A</code><span class="badge-desc">男 62% vs 女 82% —— 女生更高 ⬆️</span></div>
+                <div class="badge-item"><code class="badge-code">理学院 B</code><span class="badge-desc">男 63% vs 女 68% —— 女生更高 ⬆️</span></div>
+                <div class="badge-item"><code class="badge-code">工程学院 C</code><span class="badge-desc">男 37% vs 女 34% —— 基本持平 ➖</span></div>
+                <div class="badge-item"><code class="badge-code">心理学院 D</code><span class="badge-desc">男 33% vs 女 41% —— 女生更高 ⬆️</span></div>
+                <div class="badge-item"><code class="badge-code">文学院 E</code><span class="badge-desc">男 28% vs 女 35% —— 女生更高 ⬆️</span></div>
+                <div class="badge-item"><code class="badge-code">化学院 F</code><span class="badge-desc">男 6% vs 女 7% —— 基本持平 ➖</span></div>
+              </div>
+              <p style="font-size: var(--text-sm); color: var(--color-text-secondary)">真相：女生扎堆申请录取率低的热门院系，总体数字被"院系"这个混淆变量扭曲了。</p>
+            </div>
+          </div>
+        </div>
+        <p class="layer-description">同一份数据，切层前与切层后结论完全相反——这就是为什么混淆变量如此危险，而分层如此重要。</p>
+      </div>
+
+      <div class="translation-block animate-in">
+        <div class="translation-code">
+          <span class="translation-label">分层分析</span>
+          <pre><code>
+<span class="code-keyword">for</span> <span class="code-property">层</span> <span class="code-keyword">in</span> <span class="code-function">按混淆变量切分</span>(样本): {</span>
+<span class="code-line">  <span class="code-property">层内效应</span> = <span class="code-function">比较</span>(A 对 B)  <span class="code-comment">// 混淆被锁住</span></span>
+<span class="code-line">}</span>
+<span class="code-line"><span class="code-property">合并结论</span> = <span class="code-function">聚合</span>(所有层内效应)</span>
+          </code></pre>
+        </div>
+        <div class="translation-english">
+          <span class="translation-label">大白话</span>
+          <div class="translation-lines">
+            <p class="tl">先按可疑的混淆变量，把样本切成一层一层。</p>
+            <p class="tl">在同一层里，大家的混淆因素几乎一样，没法捣乱。</p>
+            <p class="tl">于是层内的 A→B 效应终于露出真面目。</p>
+            <p class="tl">最后把各层的结论合并起来，就是更可信的答案。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout callout-warning animate-in">
+        <div class="callout-icon">🌀</div>
+        <div class="callout-content">
+          <strong class="callout-title">辛普森悖论（Simpson&apos;s Paradox）</strong>
+          <p>在每一个分层里 A 都更好，但合在一起却是 B 更好——聚合数据可能讲一个与真相完全相反的故事。只要混淆变量存在，汇总统计就不可信。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">分层不只是"除虫"，还是"探矿"</h3>
+      <p>分层还有一个更深的用途：有时效应在<strong>不同层里本来就不一样</strong>，这叫<span class="term" data-definition="交互效应（interaction effect）指处理的效果随某个因素而变化。比如一种药对年轻人有效、对老年人无效——'药物有效性'与'年龄'存在交互效应。">交互效应</span>。</p>
+      <p>比如一种药物可能对年轻人有效、对老年人无效。如果把两层混在一起平均，可能得出"整体无效"的错误结论——好药就这样被埋没了。</p>
+
+      <div class="callout callout-accent animate-in">
+        <div class="callout-icon">📋</div>
+        <div class="callout-content">
+          <strong class="callout-title">预先声明，而不是事后挑数据</strong>
+          <p>分层方案必须在实验<strong>开始前</strong>根据理论预期声明。"看完数据再挑一个对自己有利的分层方式"，在统计学里有个臭名昭著的名字：<span class="term" data-definition="p-hacking 指反复尝试不同的分析方式，直到碰出一个'显著'的结果。这不是发现规律，而是在噪声里挑数据——找到的'规律'大概率是巧合。">p-hacking</span>（数据钓鱼）。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen animate-in">
+      <h3 class="screen-heading">测验：揪出混淆变量</h3>
+      <div class="quiz-container" id="quiz-module3">
+        <div class="scenario-block">
+          <div class="scenario-context">
+            <span class="scenario-label">场景</span>
+            <p>某城市统计发现：自带午餐上班的员工，年度体检指标普遍更好。公司准备发文鼓励员工自带午餐。</p>
+          </div>
+          <div class="quiz-question-block"
+               data-correct="option-c"
+               data-explanation-right="没错！健康意识强的人既倾向于自带午餐、又有更好的体检指标——它同时影响 A 和 B，是标准的混淆变量。"
+               data-explanation-wrong="混淆变量的定义是'同时影响自带午餐和体检指标'。健康状况差可能影响是否带饭，但更完整的答案是'健康意识'——它同时驱动了饮食选择和体检结果。">
+            <h3 class="quiz-question">以下哪个最可能是这组数据里的混淆变量？</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>公司食堂的距离</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>午餐盒的颜色</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>整体健康意识——注重健康的人既带饭又勤体检、多锻炼</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+
+          <div class="quiz-question-block"
+               data-correct="option-b"
+               data-explanation-right="正是！交互效应意味着药效在子群体间不同。混在一起平均会把好药'平均没'——按病情分层分析才能看到真相。"
+               data-explanation-wrong="想想交互效应：如果药只对重症患者有效，轻重症混在一个大池子里平均，药效会被轻症患者的'没反应'稀释掉。正确做法是按病情分层。">
+            <h3 class="quiz-question">一种新药整体平均只比安慰剂好 1%，但研究者怀疑它对重症患者特别有效。最该做什么？</h3>
+            <div class="quiz-options">
+              <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>放弃这药——1% 太小了</span>
+              </button>
+              <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>按病情轻重分层，在各层内部比较药效</span>
+              </button>
+              <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                <div class="quiz-option-radio"></div>
+                <span>加大剂量重做实验</span>
+              </button>
+            </div>
+            <div class="quiz-feedback"></div>
+          </div>
+        </div>
+
+        <button class="quiz-check-btn" onclick="checkQuiz('quiz-module3')">检查答案</button>
+        <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module3')">重做</button>
+      </div>
+    </div>
+
+  </div>
+</section>
