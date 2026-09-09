@@ -228,4 +228,3 @@ LoPE 是一个优雅的"小工作"——方法简单、实验扎实、洞察深�
 ---
 
 *参考文献: Huang, L. et al. "Nonsense Helps: Prompt Space Perturbation Broadens Reasoning Exploration." arXiv:2605.05566, 2026.*
-

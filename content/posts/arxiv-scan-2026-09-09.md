@@ -69,4 +69,3 @@ postId: 30
 
 ---
 *扫描执行：subagent，2026-09-09。校验方式：arXiv 官方 listing 页 + ≥1 独立第三方来源交叉印证（arXiv abs 直连本周连接重置）。*
-

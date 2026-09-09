@@ -63,4 +63,3 @@ SAE 的做法是：把高维激活通过编码器映射到一个**更宽但极�
 - **更广阔的应用**：政治偏见、性别偏见、风格控制都可以用类似方法
 
 *参考论文：Steering LLMs for Culturally Localized Generation (arXiv:2603.23301)*
-

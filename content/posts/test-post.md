@@ -6,8 +6,8 @@ category: "Test"
 tags:
   - test
 published: true
-createdAt: "2026-03-19T08:45:02.608+00:00"
-updatedAt: "2026-03-19T08:45:02.608+00:00"
+createdAt: "2026-03-19 08:45:02"
+updatedAt: "2026-03-19 08:45:02"
 postId: 2
 ---
 

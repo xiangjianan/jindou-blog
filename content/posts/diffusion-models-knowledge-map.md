@@ -180,4 +180,3 @@ postId: 38
 | 8 | Rectified Flow | 2023 | 流匹配 |
 | 9 | Consistency | 2023 | 单步生成 |
 | 10 | Flux | 2024 | RF + Transformer |
-

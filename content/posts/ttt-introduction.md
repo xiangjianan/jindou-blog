@@ -271,4 +271,3 @@ In-Place TTT 的核心优势体现在**长上下文**场景：
 2. Sun et al. "TTT Layers: A New Building Block for Efficient Inference and Learning" (2024)
 3. Feng et al. "In-Place Test-Time Training" (ICLR 2026 Oral) — [论文](https://arxiv.org/abs/2501.13079) | [代码](https://github.com/ByteDance-Seed/In-Place-TTT)
 4. Geva et al. "Transformer Feed-Forward Layers Are Key-Value Memories" (EMNLP 2020)
-

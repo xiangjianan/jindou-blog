@@ -123,4 +123,3 @@ Agent 工具的可靠性一半在你 schema 的形式化程度——模型诚实
 
 - SilentProbe: Measuring Silent Failure in Production APIs Used as Agent Tools — arXiv:2609.00035
 - 本地笔记：memory/research/survey-tool-reliability-0903.md
-

@@ -49,4 +49,3 @@ GSEM 提出的核心架构：
 在 MedR-Bench / MedAgentsBench 上用 DeepSeek-V3.2 达 70.90%，所有 baseline 最高。
 
 *参考论文：GSEM: Graph-based Self-Evolving Memory (arXiv:2603.22096)*
-

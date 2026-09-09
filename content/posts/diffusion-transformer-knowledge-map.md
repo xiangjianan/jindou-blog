@@ -187,4 +187,3 @@ Flow Matching 正在成为 DiT 系列的主流训练范式（SD3、FLUX 均采�
 - 扩散模型笔记中的 LDM（潜空间扩散）概念在 DiT 生态中被全面继承（Latent DiT）
 
 建议阅读顺序：先理解扩散模型基础 → 再看 DiT 如何用 Transformer 替换骨干。
-

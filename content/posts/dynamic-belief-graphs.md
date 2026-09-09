@@ -59,4 +59,3 @@ LLM 做 Theory of Mind (ToM) 推理时，现有方法把信念当**静态独立�
 这个 Neuro-symbolic 范式值得推广到更多需要可解释性的领域。
 
 *参考论文：Learning Dynamic Belief Graphs for Theory-of-mind Reasoning (arXiv:2603.20170)*
-

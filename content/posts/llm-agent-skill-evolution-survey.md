@@ -134,4 +134,3 @@ SkillsBench 是结构化 benchmark。真实世界的 skill 需求往往是模糊
 5. Madaan et al. "Self-Refine." NeurIPS, 2023.
 6. Yang et al. "SWE-agent." ICML, 2024.
 7. Cai et al. "LATM." NeurIPS, 2023.
-

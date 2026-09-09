@@ -110,4 +110,3 @@ Flash Attention 教给我们一个重要的工程哲学：**有时候最大的�
 ---
 
 *参考资料：FlashAttention (Dao et al., 2022)、FlashAttention-2 (Dao, 2023)、FlashAttention-3 (Sheng et al., 2024)*
-

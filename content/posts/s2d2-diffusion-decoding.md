@@ -170,4 +170,3 @@ S2D2 的核心思想可以推广到:
 这个框架展示了一个更普遍的范式:在几乎所有的生成任务中,都存在"快速但可能错误"和"慢但准确"的两种模式。关键在于如何智能地结合它们。
 
 *参考论文:S2D2: Fast Decoding for Diffusion LLMs via Training-Free Self-Speculation (arXiv:2603.25702)*
-

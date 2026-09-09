@@ -159,4 +159,3 @@ Test-time compute scaling 展示了令人兴奋的缩放趋势，但：
 深入：o1/o3 推理范式 → AlphaProof → Test-time Compute Scaling 理论
 前沿：Absolute Zero → SAGE → 推理的形式化理论
 ```
-

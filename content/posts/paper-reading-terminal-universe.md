@@ -63,4 +63,3 @@ postId: 32
 
 ---
 *精读执行：subagent，2026-09-09。主来源：alphaXiv 页（摘要+概述+引文）；交叉：arXiv listing、HF Papers（271 upvote）。arXiv 直连当日不可用，网络受限已声明。*
-

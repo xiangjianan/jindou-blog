@@ -152,4 +152,3 @@ Elhage et al. (2021) 发现 Transformer 通过组合两个注意力头实现 in-
 4. Ainslie et al., "GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints", EMNLP 2023
 5. Elhage et al., "A Mathematical Framework for Transformer Circuits", 2021
 6. Olsson et al., "Are Sparse Mixture of Experts a Substitute for Dense Models?", 2024
-

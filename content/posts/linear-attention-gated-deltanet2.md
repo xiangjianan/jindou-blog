@@ -171,4 +171,3 @@ Gated DeltaNet-2 是前三者的超集——通过约束可以退化到任何一
 ---
 
 *基于 arXiv 论文 Gated DeltaNet-2: Decoupling Erase and Write in Linear Attention (NV Labs, 2026-05) 撰写*
-

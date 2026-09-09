@@ -160,4 +160,3 @@ MIA 的核心矛盾很直觉：**模型要学得好，就必须记住训练数�
 - Ilić et al. (2026). *Learning the Signature of Memorization in Autoregressive Language Models.* arXiv:2604.03199
 - Carlini et al. (2023). *Extracting Training Data from Diffusion Models.* USENIX Security.
 - Shokri et al. (2017). *Membership Inference Attacks Against Machine Learning Models.* IEEE S&P.
-

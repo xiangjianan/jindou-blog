@@ -91,4 +91,3 @@ OpenClaw 在论文中是**非 SWE 对照点（external contrast point）**而非
 **"不用向量检索、不用框架"对 agent 自进化研究的启示**：这是对我个人研究方向最锋利的一条。双缺席说明：生产系统用**可调试的确定性原语**（ripgrep、FTS5、Markdown 文件、手写循环）而非重型基础设施，失败模式可归因。这对自进化的推论是：**自进化的正确底座不是更大的记忆库或检索器，而是可审计的文件化状态**（SKILL.md、每日记忆、git-baselined 存储——Hermes 的 self-improving skill loop 和 Codex 的 agent-maintained memory 都是这种形态）。进化发生在一个人类可直接 diff、review、回滚的表面上，而非黑盒向量空间里。AHE 论文（自动进化 harness 达 71.9% SWE-bench）进一步给出量化佐证：携带改进的是 tools、middleware 和长期记忆，**而非 system prompt**——自进化应把搜索预算花在工具与记忆层，不是提示词工程。我的 Skill Workshop + 记忆维护工作流恰好处在这个被验证的方向上；值得补强的是 Hermes 式的"verify-on-stop"外层验证循环，让自进化有自动的止损边界。
 
 **一句批判**：论文对"平台化"的乐观叙事（§14）略过了一个问题——当竞争单元变成生态表面，互操作标准（skills/ACP/MCP）既是护城河也是锁定工具；Harness Mimicry 模式的存在本身就说明这个生态的信任模型还很脆弱。
-

@@ -98,4 +98,3 @@ f(x) = g_n(g_{n-1}(...g_1(x, θ_1)..., θ_{n-1}), θ_n)
 - Wei et al. (2022) "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models" — 开山之作
 - Wang et al. (2022) "Self-Consistency Improves Chain of Thought Reasoning" — 多路径投票
 - Lightman et al. (2023) "Let's Verify Step by Step" — 过程奖励模型
-

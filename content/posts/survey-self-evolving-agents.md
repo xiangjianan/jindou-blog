@@ -67,4 +67,3 @@ Agent 系统的表现 = 基座模型 × 模型外围结构（harness）的联合
 - SilentProbe: https://arxiv.org/abs/2609.00035
 - Mobile-Agent-E: https://arxiv.org/abs/2501.11733
 - 综述: https://arxiv.org/abs/2507.21046 / https://arxiv.org/abs/2508.07407
-

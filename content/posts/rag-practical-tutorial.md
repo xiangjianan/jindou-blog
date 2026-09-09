@@ -368,4 +368,3 @@ results = collection.query(
 - **Agentic RAG**：让 AI 自主决定何时检索、检索什么
 
 记住：**RAG 的核心不是技术，而是让 LLM "有据可依"这个思想**。技术栈会变，但这个思想不会过时。
-

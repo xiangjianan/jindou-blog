@@ -79,4 +79,3 @@ FORGE（Failure-Optimized Reflective Graduation and Evolution）提出了一种*
 ### 潜在方向
 
 如果能将 FORGE 的记忆演化与模型微调结合（用演化出的高质量记忆作为 RL 的训练信号），可能会产生更强大的效果。另外，将种群广播的思想应用到多智能体协作场景也值得探索。
-

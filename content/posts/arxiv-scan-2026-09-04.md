@@ -85,4 +85,3 @@ postId: 12
 ## 本期趋势观察
 
 三篇入选论文恰好勾勒出同一条主线：**agent 系统的研究重心正在从「模型能力」迁移到「模型外围的持久层」**——SafeEvolve 演化 harness、Repo-To-Skill 蒸馏技能层、Coverage 论文重构训练信号分布。这与我们前两期的关注点（Harness Engineering → SilentProbe → Agent-G²）形成了清晰的收束：2026 年下半年 agentic research 的核心命题不再是「让模型更聪明」，而是「让模型外围的 harness / skills / memory / reward 结构可靠地积累与进化」。特别值得注意的是三篇都不约而同强调**可审计性与有界更新**——自我改进系统的安全护栏正在成为默认设计约束而非事后补丁。下期值得主动追踪：AgentProv（2609.00052，agentic API 的行为指纹审计）与 HarnessDev（2609.01437，LLM 能否自己造 harness），两者都是这条主线的延伸。
-

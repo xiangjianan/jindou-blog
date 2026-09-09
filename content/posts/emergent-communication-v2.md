@@ -105,4 +105,3 @@ postId: 91
 - Steels (2001): "Language Games for Autonomous Robots"
 - Foerster et al. (2016): "Learning to Communicate with Deep Multi-Agent Reinforcement Learning"
 - Lowe et al. (2019): "Multi-Agent Communication via Differentiable Protocol Learning"
-

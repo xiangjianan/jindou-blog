@@ -61,4 +61,3 @@ MoE 层的数学表述如下。给定输入 x ∈ R^d，MoE 层的输出为：
 - **专家并行与通信优化**：采用 EP（Expert Parallelism）+ TP（Tensor Parallelism）混合并行策略，通过 All-to-All 通信在 GPU 间分发 token，通信开销成为瓶颈。
 - **稀疏注意力 + MoE 结合**：如 DeepSeek-V3 在注意力层也引入 Multi-Head Latent Attention (MLA) 进一步压缩 KV cache，与 MoE 的稀疏 FFN 形成双重稀疏架构。
 - **专家淘汰与知识蒸馏**：研究发现训练后的 MoE 模型中部分专家贡献极低，可通过剪枝 + 蒸馏获得更紧凑的等效模型。
-

@@ -79,4 +79,3 @@ postId: 66
 1. 在通用领域（不仅限于工具调用）中检测 performative reasoning
 2. Adaptive compute + early exit 是否能自然过滤掉表演性推理？
 3. 在多步推理（数学证明、代码生成）中，pre-decision encoding 是否仍然存在？
-

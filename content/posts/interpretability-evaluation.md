@@ -33,4 +33,3 @@ postId: 43
 这篇论文点出了机械可解释性领域的一个核心困境——评价解释的好坏本身就很困难。功能可互换性的无监督评价是个有趣的思路，但能否全面替代人类判断还有待验证。
 
 *参考论文：Pitfalls in Evaluating Interpretability Agents (arXiv:2603.20101)*
-

@@ -83,4 +83,3 @@ Agent Skill 不同于 tool call。Anthropic 将 skill 定义为**包含工作流
 ---
 
 *参考文献：EvoSkills (2604.01687), Reflexion (NeurIPS'23), Self-Refine (NeurIPS'23), Generative Agents (UIST'23), SWE-agent (ICML'24), LATM (NeurIPS'23), MemGPT (2024), CRITIC (2024), Read More Think More (2604.01535)*
-

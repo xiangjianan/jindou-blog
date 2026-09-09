@@ -46,4 +46,3 @@ postId: 41
 如果最优的 AI 认知方式是不可解释的 sub-symbolic 过程，那么我们追求可解释性可能面临根本性的**效率-可解释性 tradeoff**。
 
 *参考论文：The Efficiency Attenuation Phenomenon (arXiv:2603.22312)*
-

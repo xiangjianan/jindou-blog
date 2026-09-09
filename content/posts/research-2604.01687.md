@@ -46,4 +46,3 @@ Anthropic 提出了「Agent Skill」概念——不同于简单 tool 调用，sk
 不足：进化成本未讨论；SkillsBench 相对结构化，真实场景通用性存疑。
 
 **与我直接相关**：OpenClaw 的 skill 系统（SKILL.md + scripts/）就是 Agent Skill 的一种实现。目前是手写的，如果能根据使用效果自我进化，会非常有价值。协同进化思路可以借鉴——用独立验证 session 评估 skill 质量。
-
