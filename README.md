@@ -1,12 +1,14 @@
-# 金豆的 AI 笔记 🐱
+# Jindou's AI Notes 🐱
 
-AI 研究与科普博客：论文精读、arXiv 扫描、三难度教程、互动课程。
+**English** | [简体中文](README.zh-CN.md)
 
-**线上地址**：https://jindou-blog.pages.dev （Cloudflare Pages，纯静态）
-**数据源**：阿里云 MySQL（构建时经 SSH 隧道访问）
-**文章存档**：本仓库 `content/posts/`（全部文章的 Markdown 存档，与数据库同步）
+An AI research & popular-science blog: paper deep-dives, arXiv scanning, three-difficulty tutorials, and interactive courses.
 
-## 架构
+**Live site**: https://jindou-blog.pages.dev (Cloudflare Pages, fully static)
+**Data source**: Aliyun MySQL (accessed via SSH tunnel at build time)
+**Article archive**: `content/posts/` in this repo (Markdown archive of all posts, synced with the database)
+
+## Architecture
 
 ```
 阿里云 MySQL (blog 库)
@@ -19,12 +21,12 @@ Nuxt 3 构建（预渲染 120+ 路由，数据只在构建时读取）
 Cloudflare Pages
 ```
 
-- 线上是**纯静态站点**：没有运行时 API，所有页面构建时预渲染
-- 数据库只在**构建时**访问（本机构建，需隧道在线）
-- 文章管理的写入路径是直接操作数据库（`mysql` CLI），已无 admin UI
-- 仓库同时承载完整文章存档（`content/posts/`），是文章的持久备份
+- The live site is a **purely static site**: no runtime API, all pages pre-rendered at build time
+- The database is only accessed at **build time** (local build, tunnel must be online)
+- The write path for article management operates directly on the database (`mysql` CLI); the admin UI has been removed
+- The repo also hosts the complete article archive (`content/posts/`), serving as a durable backup of all posts
 
-## 目录结构
+## Directory Structure
 
 ```
 pages/            # 前台页面（首页、文章、互动课程入口）
@@ -36,23 +38,23 @@ prisma/           # schema（MySQL）
 scripts/          # 工具脚本，见下表
 ```
 
-| 脚本 | 用途 |
+| Script | Purpose |
 |------|------|
-| `scripts/mysql-tunnel.sh` | 建立/自检 SSH 隧道（构建和写库前必跑） |
-| `scripts/export-posts.py` | 数据库 → `content/posts/` 存档导出 |
-| `scripts/migrate-sqlite-to-mysql.py` | （一次性）SQLite → MySQL 迁移 |
-| `scripts/db-ping.mjs` | 数据库连通性自检 |
+| `scripts/mysql-tunnel.sh` | Establish/self-check the SSH tunnel (must run before build and DB writes) |
+| `scripts/export-posts.py` | Database → `content/posts/` archive export |
+| `scripts/migrate-sqlite-to-mysql.py` | (one-off) SQLite → MySQL migration |
+| `scripts/db-ping.mjs` | Database connectivity self-check |
 
-## 新增文章流程（心跳自动化）
+## New Article Workflow (heartbeat automation)
 
-1. `scripts/mysql-tunnel.sh` — 确保隧道在线
+1. `scripts/mysql-tunnel.sh` — make sure the tunnel is online
 2. `mysql --defaults-extra-file=~/.myblog.cnf blog -e "INSERT INTO Post ..."`
-3. `npm run build` — 预渲染（路由由 `nuxt.config.ts` 的 `prerender:routes` 钩子从数据库注册）
+3. `npm run build` — pre-render (routes are registered from the database via the `prerender:routes` hook in `nuxt.config.ts`)
 4. `npx wrangler pages deploy ./.output/public --project-name jindou-blog --branch main --commit-dirty=true`
-5. `python3 scripts/export-posts.py` — 刷新文章存档
+5. `python3 scripts/export-posts.py` — refresh the article archive
 6. `git add -A && git commit && git push`
 
-## 本地开发
+## Local Development
 
 ```bash
 npm install
@@ -60,13 +62,13 @@ npm install
 npm run dev
 ```
 
-环境变量（`.env`，不入库）：`DATABASE_URL="mysql://user:***@127.0.0.1:3307/blog"`
+Environment variables (`.env`, not committed): `DATABASE_URL="mysql://user:***@127.0.0.1:3307/blog"`
 
-> MySQL 密码中的 `%` 需 URL 编码为 `%25`。
+> The `%` in the MySQL password must be URL-encoded as `%25`.
 
-## 历史
+## History
 
-- 2026-03：Nuxt 3 项目初始化
-- 2026-09-02：开始承载 AI 笔记内容，部署至 Cloudflare Pages（jindou-blog.pages.dev）
-- 2026-09-09：与旧 Astro 博客统一为本仓库；数据库 SQLite → 阿里云 MySQL；admin UI/API 整体移除
-- 早期 Astro 版本封存于 `astro-legacy` 分支
+- 2026-03: Nuxt 3 project initialized
+- 2026-09-02: Started hosting AI notes content, deployed to Cloudflare Pages (jindou-blog.pages.dev)
+- 2026-09-09: Consolidated the old Astro blog into this repo; database SQLite → Aliyun MySQL; admin UI/API removed entirely
+- The early Astro version is archived on the `astro-legacy` branch
