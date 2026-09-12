@@ -11,12 +11,12 @@ An AI research & popular-science blog: paper deep-dives, arXiv scanning, three-d
 ## Architecture
 
 ```
-阿里云 MySQL (blog 库)
-   │  SSH 隧道 127.0.0.1:3307 → aliyun:3306
+Aliyun MySQL (blog database)
+   │  SSH tunnel 127.0.0.1:3307 → aliyun:3306
    ▼
-Nuxt 3 构建（预渲染 120+ 路由，数据只在构建时读取）
+Nuxt 3 build (pre-renders 120+ routes; data is read only at build time)
    ▼
-.output/public（纯静态）
+.output/public (pure static)
    ▼ wrangler pages deploy
 Cloudflare Pages
 ```
@@ -29,13 +29,13 @@ Cloudflare Pages
 ## Directory Structure
 
 ```
-pages/            # 前台页面（首页、文章、互动课程入口）
-server/lib/       # Prisma 客户端（mariadb driver adapter）
-server/api/posts/ # 构建期预渲染用的只读 API（仅本地/构建时存在）
-content/posts/    # 全部文章的 Markdown 存档（每篇含元数据 frontmatter）
-public/courses/   # 互动课程（独立静态 HTML）
+pages/            # Frontend pages (home, articles, interactive course entry)
+server/lib/       # Prisma client (mariadb driver adapter)
+server/api/posts/ # Read-only API for build-time pre-rendering (exists only locally/at build time)
+content/posts/    # Markdown archive of all posts (each with metadata frontmatter)
+public/courses/   # Interactive courses (standalone static HTML)
 prisma/           # schema（MySQL）
-scripts/          # 工具脚本，见下表
+scripts/          # Utility scripts, see table below
 ```
 
 | Script | Purpose |
@@ -58,7 +58,7 @@ scripts/          # 工具脚本，见下表
 
 ```bash
 npm install
-./scripts/mysql-tunnel.sh   # 需要数据库
+./scripts/mysql-tunnel.sh   # database required
 npm run dev
 ```
 
