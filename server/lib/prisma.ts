@@ -16,6 +16,9 @@ function adapterFromEnv() {
     password: decodeURIComponent(url.password),
     database: url.pathname.replace(/^\//, ''),
     connectionLimit: 5,
+    // 注意：mariadb 池按设计常驻 ≥minimumIdle 条连接（minimumIdle=0 则拒绝建连，
+    // 默认值=connectionLimit 则永不回收），因此 nuxt build 结束后进程不会自然退出。
+    // 发布收尾由 scripts/deploy.sh 的构建看门狗处理（2026-09-18 定位）。
     // 预渲染环境首连较慢（SSH 隧道 + worker 调度），给足超时
     connectTimeout: 30000,
     initializationTimeout: 60000,
