@@ -16,6 +16,8 @@ function adapterFromEnv() {
     password: decodeURIComponent(url.password),
     database: url.pathname.replace(/^\//, ''),
     connectionLimit: 5,
+    // caching_sha2_password 认证需要 RSA 公钥；连接已经 SSH 隧道加密，允许检索是安全的
+    allowPublicKeyRetrieval: true,
     // 注意：mariadb 池按设计常驻 ≥minimumIdle 条连接（minimumIdle=0 则拒绝建连，
     // 默认值=connectionLimit 则永不回收），因此 nuxt build 结束后进程不会自然退出。
     // 发布收尾由 scripts/deploy.sh 的构建看门狗处理（2026-09-18 定位）。

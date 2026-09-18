@@ -32,7 +32,9 @@ export default defineNuxtConfig({
           user: decodeURIComponent(url.username),
           password: decodeURIComponent(url.password),
           database: url.pathname.replace(/^\//, ''),
-          connectTimeout: 30000
+          connectTimeout: 30000,
+          // caching_sha2_password 认证需要 RSA 公钥；连接已经 SSH 隧道加密，允许检索是安全的
+          allowPublicKeyRetrieval: true
         })
         try {
           const rows = await conn.query('SELECT slug FROM Post WHERE published = 1')
