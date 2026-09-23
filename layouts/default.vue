@@ -1,32 +1,61 @@
 <template>
   <div class="layout">
-    <nav class="navbar">
-      <div class="container">
-        <NuxtLink to="/" class="logo">
-          <span class="logo-text">Blog</span>
-        </NuxtLink>
-        <div class="nav-links">
-          <NuxtLink to="/" class="nav-link">Home</NuxtLink>
-        </div>
+    <header class="site-header">
+      <div class="container header-inner">
+        <NuxtLink to="/" class="wordmark">jindou<span class="wordmark-cursor">_</span></NuxtLink>
+
+        <nav class="header-nav">
+          <NuxtLink to="/" class="nav-link">文章</NuxtLink>
+          <a
+            href="https://github.com/xiangjianan"
+            target="_blank"
+            rel="noopener"
+            class="nav-link"
+          >GitHub ↗</a>
+          <button
+            type="button"
+            class="theme-toggle"
+            aria-label="切换深色模式"
+            @click="toggleTheme"
+          >
+            <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="4" />
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+            </svg>
+            <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+          </button>
+        </nav>
       </div>
-    </nav>
-    
+    </header>
+
     <main class="main">
       <slot />
     </main>
-    
-    <footer class="footer">
-      <div class="container">
-        <div class="footer-content">
-          <p class="copyright">&copy; {{ new Date().getFullYear() }} Blog. All rights reserved.</p>
-          <p class="powered-by">Powered by Nuxt</p>
-        </div>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <p class="footer-note">&copy; {{ year }} 金豆 · 把前沿 AI 讲到真正理解</p>
+        <p class="footer-domain">aiblog.helloxjn.com</p>
       </div>
     </footer>
   </div>
 </template>
 
 <script setup lang="ts">
+const year = new Date().getFullYear()
+
+const toggleTheme = () => {
+  const el = document.documentElement
+  const dark = !el.classList.contains('dark')
+  el.classList.toggle('dark', dark)
+  try {
+    localStorage.setItem('jd-theme', dark ? 'dark' : 'light')
+  } catch {
+    /* localStorage 不可用时静默降级为会话内切换 */
+  }
+}
 </script>
 
 <style scoped>
@@ -37,141 +66,122 @@
   background: var(--color-bg);
 }
 
-.navbar {
-  background: var(--color-card-bg);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+.site-header {
   position: sticky;
   top: 0;
   z-index: 100;
-  backdrop-filter: blur(10px);
+  background: var(--color-header-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border);
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
+.header-inner {
+  height: 64px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 70px;
 }
 
-.logo {
+.wordmark {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+}
+
+.wordmark-cursor {
+  color: var(--color-primary);
+  animation: blink 1.4s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.header-nav {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  text-decoration: none;
-}
-
-.logo-text {
-  font-size: 1.5rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.02em;
-}
-
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 2rem;
+  gap: 20px;
 }
 
 .nav-link {
+  font-family: var(--font-mono);
+  font-size: 13px;
   color: var(--color-text-secondary);
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 0.9rem;
-  transition: color 0.2s;
-  position: relative;
+  transition: color 0.15s ease;
 }
 
 .nav-link:hover {
   color: var(--color-primary);
 }
 
-.nav-link::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: var(--color-primary);
-  transition: width 0.2s;
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.nav-link:hover::after {
-  width: 100%;
+.theme-toggle:hover {
+  background: var(--color-bg-subtle);
+  color: var(--color-text);
 }
 
-.btn-subscribe {
-  background: linear-gradient(135deg, #6c5ce7 0%, #8a2be2 100%);
-  color: white;
-  padding: 0.6rem 1.25rem;
-  border-radius: 25px;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.85rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+/* 两个图标都渲染，纯 CSS 控制显隐，避免 hydration 闪烁 */
+.icon-sun {
+  display: none;
 }
 
-.btn-subscribe:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(108, 92, 231, 0.4);
+html.dark .icon-sun {
+  display: block;
+}
+
+html.dark .icon-moon {
+  display: none;
 }
 
 .main {
   flex: 1;
 }
 
-.footer {
-  background: var(--color-card-bg);
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-  padding: 2rem 0;
+.site-footer {
+  border-top: 1px solid var(--color-border);
+  padding: 32px 0;
   margin-top: auto;
 }
 
-.footer-content {
+.footer-inner {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.copyright {
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
+.footer-note {
+  font-size: 13px;
+  color: var(--color-text-muted);
 }
 
-.powered-by {
+.footer-domain {
+  font-family: var(--font-mono);
+  font-size: 12px;
   color: var(--color-text-muted);
-  font-size: 0.8rem;
 }
 
 @media (max-width: 640px) {
-  .container {
-    padding: 0 1rem;
-    height: 60px;
-  }
-  
-  .logo-text {
-    font-size: 1.25rem;
-  }
-  
-  .nav-links {
-    gap: 1rem;
-  }
-  
-  .nav-link {
-    font-size: 0.85rem;
-  }
-  
-  .footer-content {
+  .footer-inner {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 8px;
     text-align: center;
   }
 }

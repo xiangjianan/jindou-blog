@@ -1,56 +1,50 @@
 <template>
   <div class="home">
-    <header class="hero">
-      <h1>Blog</h1>
-      <p class="subtitle">Thoughts, ideas, and stories about technology and life</p>
-    </header>
-    
-    <div v-if="posts && posts.length > 0" class="posts-grid">
-      <article v-for="post in posts" :key="post.id" class="post-card" @click="navigateTo(post.slug)">
-        <div class="card-cover">
-          <img v-if="post.coverImage" :src="post.coverImage" :alt="post.title" />
-          <div v-else class="placeholder-illustration" :style="{ background: getRandomGradient(post.id) }">
-            <svg viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="50" cy="75" r="30" fill="rgba(255,255,255,0.3)" />
-              <circle cx="100" cy="50" r="40" fill="rgba(255,255,255,0.2)" />
-              <circle cx="150" cy="80" r="25" fill="rgba(255,255,255,0.25)" />
-              <path d="M20 120 Q60 80 100 120 T180 120" stroke="rgba(255,255,255,0.4)" stroke-width="3" fill="none" />
-            </svg>
-          </div>
+    <section class="hero">
+      <div class="container">
+        <div class="hero-text">
+          <p class="hero-kicker">// AI RESEARCH NOTES</p>
+          <h1 class="hero-title">把前沿 AI，讲到真正理解。</h1>
+          <p class="hero-subtitle">深度学习 · LLM · Agent 的长文研究笔记。每一篇都追到原理层，拒绝浅尝辄止。</p>
+          <p class="hero-stats">{{ posts.length }} 篇文章<template v-if="latest"> · 最近更新 {{ formatDate(latest) }}</template></p>
         </div>
-        <div class="card-content">
-          <span class="category-tag">{{ post.category }}</span>
-          <h2 class="card-title">{{ post.title }}</h2>
-          <p class="card-excerpt">{{ post.excerpt }}</p>
-          <div class="card-footer">
-            <time class="post-date">{{ formatDate(post.createdAt) }}</time>
-            <span class="read-more">Read more →</span>
-          </div>
-        </div>
-      </article>
-    </div>
-    
-    <div v-else class="empty-state">
-      <div class="empty-illustration">
-        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-          <rect x="30" y="40" width="140" height="120" rx="8" fill="#e0e0e0" />
-          <rect x="45" y="60" width="80" height="8" rx="4" fill="#bdbdbd" />
-          <rect x="45" y="80" width="110" height="6" rx="3" fill="#e0e0e0" />
-          <rect x="45" y="95" width="90" height="6" rx="3" fill="#e0e0e0" />
-          <rect x="45" y="110" width="100" height="6" rx="3" fill="#e0e0e0" />
-          <circle cx="150" cy="130" r="25" fill="#6c5ce7" opacity="0.8" />
-          <path d="M143 130 L150 137 L160 125" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
       </div>
-      <h2>No posts yet</h2>
-      <p>Check back soon for new content!</p>
+    </section>
+
+    <section v-if="posts.length > 0" class="post-list">
+      <div class="container">
+        <section v-for="group in groups" :key="group.year" class="year-group">
+          <header class="year-header">
+            <span class="year-label">{{ group.year }}</span>
+            <span class="year-rule" aria-hidden="true"></span>
+            <span class="year-count">{{ group.posts.length }} 篇</span>
+          </header>
+
+          <div class="year-posts">
+            <NuxtLink v-for="post in group.posts" :key="post.id" :to="`/posts/${post.slug}`" class="post-row">
+              <span class="post-date">{{ formatMonthDay(post.createdAt) }}</span>
+              <span class="post-main">
+                <span class="post-title">{{ post.title }}</span>
+                <span class="post-excerpt">{{ post.excerpt }}</span>
+              </span>
+              <span class="post-side">
+                <span class="post-arrow" aria-hidden="true">→</span>
+                <span class="chip">{{ post.category }}</span>
+              </span>
+            </NuxtLink>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <div v-else class="empty-state">
+      <p class="empty-mark">// 暂无文章</p>
+      <p class="empty-note">文章正在路上。</p>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-const router = useRouter()
-
 interface Post {
   id: number
   title: string
@@ -65,20 +59,28 @@ const { data: posts } = await useFetch<Post[]>('/api/posts', {
   default: () => []
 })
 
-const gradients = [
-  'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-  'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-  'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-  'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-  'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
-  'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-  'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
-]
+// 接口按 createdAt 倒序返回，首条即最新
+const latest = computed(() => posts.value[0]?.createdAt)
 
-const getRandomGradient = (id: number) => {
-  return gradients[id % gradients.length]
+interface PostGroup {
+  year: number
+  posts: Post[]
 }
+
+// 按 createdAt 年份倒序分组，组内按时间倒序
+const groups = computed<PostGroup[]>(() => {
+  const byYear = new Map<number, Post[]>()
+  for (const post of posts.value) {
+    const year = new Date(post.createdAt).getFullYear()
+    byYear.set(year, [...(byYear.get(year) ?? []), post])
+  }
+  return [...byYear.entries()]
+    .sort((a, b) => b[0] - a[0])
+    .map(([year, list]) => ({
+      year,
+      posts: [...list].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt))
+    }))
+})
 
 const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString('en-US', {
@@ -88,224 +90,217 @@ const formatDate = (date: string) => {
   })
 }
 
-const navigateTo = (slug: string) => {
-  router.push(`/posts/${slug}`)
+const formatMonthDay = (date: string) => {
+  const d = new Date(date)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 </script>
 
 <style scoped>
 .home {
-  min-height: 100vh;
   padding-bottom: 4rem;
 }
 
+/* ---- Hero ---- */
 .hero {
-  text-align: center;
-  padding: 6rem 2rem 4rem;
-  max-width: 800px;
-  margin: 0 auto;
+  padding: 88px 0 40px;
 }
 
-.hero h1 {
-  font-size: 3.5rem;
-  font-weight: 800;
-  margin-bottom: 1rem;
-  background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.02em;
+.hero-text {
+  max-width: 720px;
 }
 
-.subtitle {
-  font-size: 1.25rem;
-  color: var(--color-text-secondary);
-  max-width: 600px;
-  margin: 0 auto;
-  line-height: 1.6;
-}
-
-.posts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 2rem;
-}
-
-@media (min-width: 1200px) {
-  .posts-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-@media (min-width: 900px) and (max-width: 1199px) {
-  .posts-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (min-width: 600px) and (max-width: 899px) {
-  .posts-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.post-card {
-  background: var(--color-card-bg);
-  border-radius: 12px;
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.post-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-}
-
-.card-cover {
-  aspect-ratio: 16 / 10;
-  overflow: hidden;
-  position: relative;
-}
-
-.card-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s ease;
-}
-
-.post-card:hover .card-cover img {
-  transform: scale(1.05);
-}
-
-.placeholder-illustration {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.placeholder-illustration svg {
-  width: 80%;
-  height: 80%;
-}
-
-.card-content {
-  padding: 1.5rem;
-}
-
-.category-tag {
-  display: inline-block;
-  background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
-  color: white;
-  padding: 0.35rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
+.hero-kicker {
+  font-family: var(--font-mono);
+  font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 0.75rem;
+  letter-spacing: 0.14em;
+  color: var(--color-primary);
 }
 
-.card-title {
-  font-size: 1.25rem;
+.hero-title {
+  margin-top: 20px;
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
   font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
   color: var(--color-text);
-  margin-bottom: 0.5rem;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
-.card-excerpt {
+.hero-subtitle {
+  margin-top: 20px;
+  font-size: 17px;
   color: var(--color-text-secondary);
-  font-size: 0.9rem;
-  line-height: 1.6;
-  margin-bottom: 1rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  line-height: 1.75;
+  max-width: 560px;
 }
 
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 0.75rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.post-date {
-  font-size: 0.8rem;
+.hero-stats {
+  margin-top: 28px;
+  font-family: var(--font-mono);
+  font-size: 13px;
   color: var(--color-text-muted);
 }
 
-.read-more {
-  font-size: 0.85rem;
+/* ---- 年份分组列表 ---- */
+.year-group:first-child .year-header {
+  margin-top: 48px;
+}
+
+.year-header {
+  margin: 48px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.year-label {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.year-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+.year-count {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.post-row {
+  display: grid;
+  grid-template-columns: 88px 1fr auto;
+  grid-template-areas: "date main side";
+  gap: 20px;
+  align-items: baseline;
+  padding: 20px 20px;
+  margin: 0 -20px;
+  border-radius: 12px;
+  transition: background-color 0.15s ease;
+}
+
+/* 相邻行之间的细分隔线 */
+.year-posts > .post-row + .post-row {
+  border-top: 1px solid var(--color-border);
+}
+
+.post-date {
+  grid-area: date;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.post-main {
+  grid-area: main;
+  display: block;
+  min-width: 0;
+}
+
+.post-title {
+  display: block;
+  font-size: 16.5px;
   font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.5;
+  transition: color 0.15s ease;
+}
+
+.post-excerpt {
+  display: block;
+  margin-top: 4px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.post-side {
+  grid-area: side;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  color: var(--color-text-secondary);
+  background: transparent;
+  white-space: nowrap;
+}
+
+.post-arrow {
+  font-family: var(--font-mono);
+  font-size: 13px;
   color: var(--color-primary);
-  transition: transform 0.2s;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-.post-card:hover .read-more {
-  transform: translateX(4px);
+.post-row:hover {
+  background: var(--color-bg-subtle);
 }
 
+.post-row:hover .post-title {
+  color: var(--color-primary);
+}
+
+.post-row:hover .post-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ---- 空状态 ---- */
 .empty-state {
   text-align: center;
-  padding: 6rem 2rem;
-  max-width: 400px;
-  margin: 0 auto;
+  padding: 6rem 1rem;
 }
 
-.empty-illustration {
-  width: 200px;
-  height: 200px;
-  margin: 0 auto 2rem;
+.empty-mark {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--color-text-muted);
 }
 
-.empty-illustration svg {
-  width: 100%;
-  height: 100%;
-}
-
-.empty-state h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: 0.5rem;
-}
-
-.empty-state p {
+.empty-note {
+  margin-top: 8px;
+  font-size: 14px;
   color: var(--color-text-secondary);
 }
 
+/* ---- 移动端 ---- */
 @media (max-width: 640px) {
   .hero {
-    padding: 4rem 1rem 3rem;
+    padding: 56px 0 24px;
   }
-  
-  .hero h1 {
-    font-size: 2.5rem;
+
+  .post-row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "date side"
+      "main main";
+    gap: 10px 16px;
+    padding: 16px 0;
+    margin: 0;
+    border-radius: 0;
   }
-  
-  .subtitle {
-    font-size: 1rem;
-  }
-  
-  .posts-grid {
-    padding: 0 1rem;
-    gap: 1.5rem;
+
+  .post-arrow {
+    display: none;
   }
 }
 </style>
