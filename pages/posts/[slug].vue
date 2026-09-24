@@ -1,22 +1,26 @@
 <template>
   <article class="post">
+    <NuxtLink to="/" class="back-link">← 全部文章</NuxtLink>
+
     <header class="post-header">
+      <span class="chip">{{ post.category }}</span>
       <h1>{{ post.title }}</h1>
-      <div class="meta">
-        <span class="category">{{ post.category }}</span>
-        <span class="date">{{ formatDate(post.createdAt) }}</span>
-      </div>
+      <p class="meta">{{ formatDate(post.createdAt) }} · 约 {{ readMinutes }} 分钟 · {{ charCount }} 字</p>
     </header>
-    
+
     <div class="cover-image" v-if="post.coverImage">
       <img :src="post.coverImage" :alt="post.title" />
     </div>
-    
+
     <div class="content" v-html="renderedContent"></div>
-    
+
     <div class="tags" v-if="post.tags">
-      <span v-for="tag in post.tags.split(',')" :key="tag" class="tag">{{ tag.trim() }}</span>
+      <span v-for="tag in post.tags.split(',')" :key="tag" class="chip tag-chip">{{ tag.trim() }}</span>
     </div>
+
+    <footer class="post-footer">
+      <NuxtLink to="/" class="back-link">← 返回全部文章</NuxtLink>
+    </footer>
   </article>
 </template>
 
@@ -37,6 +41,13 @@ const renderedContent = computed(() => {
   return marked(post.value.content)
 })
 
+const charCount = computed(() => {
+  if (!post.value) return 0
+  return post.value.content.replace(/\s/g, '').length
+})
+
+const readMinutes = computed(() => Math.max(1, Math.ceil(charCount.value / 400)))
+
 const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString('en-US', {
     year: 'numeric',
@@ -46,123 +57,219 @@ const formatDate = (date: string) => {
 }
 
 useHead({
-  title: post.value?.title
+  title: post.value?.title,
+  meta: [{ name: 'description', content: post.value?.excerpt }]
 })
 </script>
 
 <style scoped>
 .post {
-  max-width: 800px;
+  max-width: 720px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 48px 24px 80px;
+}
+
+.back-link {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-text-muted);
+  transition: color 0.15s ease;
+}
+
+.back-link:hover {
+  color: var(--color-primary);
 }
 
 .post-header {
-  margin-bottom: 2rem;
+  margin-top: 32px;
+}
+
+.chip {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  color: var(--color-text-secondary);
+  background: transparent;
+  white-space: nowrap;
 }
 
 .post-header h1 {
-  font-size: 2.5rem;
+  font-size: clamp(1.75rem, 4vw, 2.375rem);
   font-weight: 700;
-  color: #2d3436;
-  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: var(--color-text);
+  margin: 16px 0;
 }
 
 .meta {
-  display: flex;
-  gap: 1rem;
-  color: #636e72;
-}
-
-.category {
-  background: #6c5ce7;
-  color: white;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-text-muted);
 }
 
 .cover-image {
-  margin-bottom: 2rem;
-  border-radius: 0.5rem;
+  margin: 28px 0;
+  border-radius: 12px;
   overflow: hidden;
+  border: 1px solid var(--color-border);
 }
 
 .cover-image img {
   width: 100%;
   height: auto;
+  display: block;
 }
 
+/* ---- 正文 prose ---- */
 .content {
-  line-height: 1.8;
-  color: #2d3436;
-}
-
-.content :deep(h1),
-.content :deep(h2),
-.content :deep(h3) {
-  margin-top: 2rem;
-  margin-bottom: 1rem;
+  font-size: 16px;
+  line-height: 1.85;
+  color: var(--color-text);
 }
 
 .content :deep(p) {
-  margin-bottom: 1rem;
+  margin: 1.35em 0;
+}
+
+.content :deep(h2) {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 2.75em 0 1em;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+  line-height: 1.35;
+}
+
+.content :deep(h3) {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 2.25em 0 0.75em;
+  line-height: 1.4;
+}
+
+.content :deep(h4),
+.content :deep(h5),
+.content :deep(h6) {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 2em 0 0.75em;
 }
 
 .content :deep(code) {
-  background: #f5f5f5;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  font-family: monospace;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--color-bg-subtle);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  padding: 2px 6px;
 }
 
 .content :deep(pre) {
-  background: #2d3436;
-  color: #f5f5f5;
-  padding: 1rem;
-  border-radius: 0.5rem;
+  background: var(--color-code-bg);
+  color: var(--color-code-text);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 18px 20px;
   overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 13.5px;
+  line-height: 1.7;
+  margin: 1.5em 0;
 }
 
 .content :deep(pre code) {
-  background: none;
+  background: transparent;
+  border: none;
   padding: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+.content :deep(blockquote) {
+  margin: 1.5em 0;
+  padding: 12px 20px;
+  border-left: 3px solid var(--color-border-strong);
+  background: var(--color-bg-subtle);
+  border-radius: 0 8px 8px 0;
+  color: var(--color-text-secondary);
 }
 
 .content :deep(a) {
-  color: #6c5ce7;
+  color: var(--color-primary);
   text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .content :deep(ul),
 .content :deep(ol) {
-  margin-bottom: 1rem;
-  padding-left: 1.5rem;
+  padding-left: 1.5em;
+  margin: 1.35em 0;
 }
 
 .content :deep(li) {
-  margin-bottom: 0.5rem;
+  margin: 0.5em 0;
 }
 
-.content :deep(blockquote) {
-  border-left: 4px solid #6c5ce7;
-  padding-left: 1rem;
-  margin: 1rem 0;
-  color: #636e72;
+.content :deep(li::marker) {
+  color: var(--color-text-muted);
 }
 
+.content :deep(img) {
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.content :deep(table) {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  margin: 1.5em 0;
+}
+
+.content :deep(th),
+.content :deep(td) {
+  border: 1px solid var(--color-border);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.content :deep(th) {
+  background: var(--color-bg-subtle);
+}
+
+.content :deep(hr) {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 3em 0;
+}
+
+.content :deep(strong) {
+  font-weight: 600;
+}
+
+/* ---- 标签与文末 ---- */
 .tags {
-  margin-top: 2rem;
+  margin-top: 48px;
   display: flex;
-  gap: 0.5rem;
   flex-wrap: wrap;
+  gap: 8px;
 }
 
-.tag {
-  background: #f5f5f5;
-  color: #636e72;
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
+.tag-chip {
+  font-size: 12px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.post-footer {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border);
 }
 </style>
