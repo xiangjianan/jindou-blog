@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>给 Agent 写好工具 Schema：5 条规则</title>
+
+  <!-- Google Fonts: Bricolage Grotesque · DM Sans · JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400;1,9..40,500&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    :root {
+      --color-accent:       #2A7B9B;
+      --color-accent-hover: #1F6280;
+      --color-accent-light: #E4F2F7;
+      --color-accent-muted: #5A9DB8;
+    }
+    /* 中文正文字距微调 */
+    body { font-family: 'DM Sans', -apple-system, 'PingFang SC', 'Noto Sans SC', sans-serif; }
+    .module-title, .screen-heading, h1, h2, h3 { font-family: 'Bricolage Grotesque', 'PingFang SC', 'Noto Sans SC', Georgia, serif; }
+  </style>
+
+  <script src="main.js" defer></script>
+</head>
+<body>
+
+  <nav class="nav" id="nav">
+    <div class="progress-bar" id="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    <div class="nav-inner">
+      <span class="nav-title">给 Agent 写好工具 Schema</span>
+      <div class="nav-dots" id="nav-dots" role="tablist">
+        <button class="nav-dot" data-target="module-1" data-tooltip="静默失败之谜" role="tab" aria-label="Module 1: 静默失败之谜"></button>
+        <button class="nav-dot" data-target="module-2" data-tooltip="Schema 的解剖学" role="tab" aria-label="Module 2: Schema 的解剖学"></button>
+        <button class="nav-dot" data-target="module-3" data-tooltip="5 条规则逐条拆解" role="tab" aria-label="Module 3: 5 条规则逐条拆解"></button>
+        <button class="nav-dot" data-target="module-4" data-tooltip="从规则到习惯" role="tab" aria-label="Module 4: 从规则到习惯"></button>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main">
+    <!-- modules/*.html content is assembled here by build.sh -->
+<section class="module" id="module-1" style="background: var(--color-bg)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">01</span>
+      <h1 class="module-title">Agent 为什么会静默失败？</h1>
+      <p class="module-subtitle">一个横跨 72 万个参数的审计，揭开了 Agent 工具调用最隐蔽的坑</p>
+    </header>
+
+    <div class="module-body">
+      <section class="screen animate-in">
+        <h2 class="screen-heading">先看一组数字</h2>
+        <p>2026 年，一项叫 <span class="term" data-definition="SilentProbe 是一项学术审计研究（arXiv:2609.00035），专门测量『静默失败』——API 装作成功、实际失败的现象。">SilentProbe</span> 的研究审计了
+        <span class="term" data-definition="OpenAPI 是一种用 JSON 描述 API 的标准格式。你给 AI Agent 配置工具时写的就是类似的东西。">OpenAPI</span> 文档，规模大得吓人：</p>
+        <div class="pattern-cards stagger-children">
+          <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">📄</div>
+            <h4 class="pattern-title">2,501 份文档</h4>
+            <p class="pattern-desc">覆盖 27 家厂商的真实线上接口</p>
+          </div>
+          <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">🔢</div>
+            <h4 class="pattern-title">721,320 个参数</h4>
+            <p class="pattern-desc">每一个都做了机器可校验性检查</p>
+          </div>
+          <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-3)">
+            <div class="pattern-icon" style="background: var(--color-actor-3)">🧪</div>
+            <h4 class="pattern-title">Live 扰动测试</h4>
+            <p class="pattern-desc">故意发错参数，看 API 怎么回应</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">结果很扎心</h2>
+        <p>研究者故意发错参数，然后观察 API 的反应。两种写法，命运天差地别：</p>
+
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">约束写在描述文字里</span>
+            <pre><code>
+<span class="code-line"><span class="code-string">"description"</span>: <span class="code-string">"请确保 date 为</span></span>
+<span class="code-line"><span class="code-string">  ISO 日期格式"</span></span>
+<span class="code-line"> </span>
+<span class="code-line"><span class="code-comment">// 结果：61 例中 44 例</span></span>
+<span class="code-line"><span class="code-comment">// API 返回 HTTP 200 + 正常 body</span></span>
+<span class="code-line"><span class="code-comment">// Agent 完全不知道自己错了</span></span>
+            </code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">PLAIN ENGLISH</span>
+            <div class="translation-lines">
+              <p class="tl">约束被写成了「客气的请求」，不是硬性边界。</p>
+              <p class="tl">模型发错了日期格式，服务端却照样收下。</p>
+              <p class="tl">返回 200 = "成功"？Agent 认为自己做对了。</p>
+              <p class="tl">这就是<strong>静默失败</strong>：错了，但没人知道。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-accent animate-in">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">对比组</strong>
+            <p>写成机器可校验约束（<span class="term" data-definition="enum：枚举，把参数允许的值一一列出来，比如 [pending, paid]，模型只能四选一。">enum</span> / <span class="term" data-definition="pattern：用正则表达式定义参数必须匹配的格式，机器可以直接检查对错。">pattern</span> / format）的参数：<strong>111 次错误全部诚实报错</strong>，无一静默失败。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">最戏剧的一组数据</h2>
+        <p>同一批模型、同一批厂商，只改一行 schema，行为天翻地覆：</p>
+
+        <div class="flow-animation" data-steps='[
+          {"highlight":"flow-actor-1","label":"模型需要填 status 参数，schema 里只有一句中文描述"},
+          {"highlight":"flow-actor-1","label":"模型自由发挥：completed / paid / done 都可能出现","packet":true,"from":"actor-1","to":"actor-2"},
+          {"highlight":"flow-actor-2","label":"服务端不认识这些词，88 次里 88 次用错"},
+          {"highlight":"flow-actor-2","label":"现在把词汇提升为 enum：[pending, paid, shipped, closed]"},
+          {"highlight":"flow-actor-1","label":"模型只能从 4 个合法值里选","packet":true,"from":"actor-1","to":"actor-2"},
+          {"highlight":"flow-actor-2","label":"结果：89 次调用，0 次用错"}
+        ]'>
+          <div class="flow-actors">
+            <div class="flow-actor" id="flow-actor-1">
+              <div class="flow-actor-icon">🤖</div>
+              <span>模型</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-2">
+              <div class="flow-actor-icon">🗄️</div>
+              <span>API 服务端</span>
+            </div>
+          </div>
+          <div class="flow-packet" id="flow-packet"></div>
+          <div class="flow-step-label" id="flow-label">点击「下一步」开始</div>
+          <div class="flow-controls">
+            <button class="btn flow-next-btn">下一步</button>
+            <button class="btn flow-reset-btn">重新开始</button>
+            <span class="flow-progress"></span>
+          </div>
+        </div>
+
+        <div class="callout callout-accent animate-in">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">核心洞察</strong>
+            <p>模型不是不守规矩——是你的 schema 没给它守规矩的机会。<strong>约束的形式</strong>，决定了 Agent 的可靠性。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">热身检查</h2>
+        <p>来，用一个场景验证你抓住重点没有：</p>
+        <div class="quiz-container" id="quiz-module1">
+          <div class="scenario-block">
+            <div class="scenario-context">
+              <span class="scenario-label">场景</span>
+              <p>你的 Agent 调用了一个天气工具，参数 city 填了「北京」而不是工具期望的 "beijing"。API 返回了 HTTP 200 和一段"暂无该城市数据"的文案。Agent 接下来会怎么做？</p>
+            </div>
+            <div class="quiz-question-block"
+                 data-correct="option-b"
+                 data-explanation-right="正是！HTTP 200 + 可解析的 body = Agent 眼中的『成功』。它不会重试、不会改参数，只会把『暂无数据』当作事实告诉你——这就是静默失败的完整链条。"
+                 data-explanation-wrong="注意：Agent 不会『感知』到出错，因为它看到的是 200 成功状态码和一段正常的文本。没有报错信号，它就没有重试或纠正的理由。">
+              <h3 class="quiz-question">Agent 会怎么理解这次调用？</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>察觉出错了，自动换个格式重试</span>
+                </button>
+                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>认为调用成功了，把「暂无数据」当作事实返回给用户</span>
+                </button>
+                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>抛出异常，请求人类介入</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module1')">检查答案</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module1')">再试一次</button>
+          </div>
+        </div>
+
+        <p style="margin-top: var(--space-8)">答案就藏在 schema 的写法里。下一模块，我们解剖 schema 本身。</p>
+      </section>
+    </div>
+  </div>
+</section>
+<section class="module" id="module-2" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">02</span>
+      <h1 class="module-title">Schema 的解剖学</h1>
+      <p class="module-subtitle">一个参数定义里的每个部位，各管一件事——搞混了就会出事</p>
+    </header>
+
+    <div class="module-body">
+      <section class="screen animate-in">
+        <h2 class="screen-heading">Schema 是模型的「合同」</h2>
+        <p>把工具 schema 想象成一份<strong>租房合同</strong>：它不是给租客的建议清单，而是有法律效力的边界。合同里不同的条款有不同的效力——</p>
+
+        <div class="pattern-cards stagger-children">
+          <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">📋</div>
+            <h4 class="pattern-title">type / enum / pattern</h4>
+            <p class="pattern-desc"><strong>硬性条款</strong>：机器直接校验，违反就报错。相当于合同里的违约责任。</p>
+          </div>
+          <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-4)">
+            <div class="pattern-icon" style="background: var(--color-actor-4)">💬</div>
+            <h4 class="pattern-title">description</h4>
+            <p class="pattern-desc"><strong>走廊里贴的便条</strong>：帮模型理解「这参数是干嘛的」，但没有任何强制力。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">逐部位拆解</h2>
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">SCHEMA</span>
+            <pre><code>
+<span class="code-line">{</span>
+<span class="code-line">  <span class="code-property">"status"</span>: {</span>
+<span class="code-line">    <span class="code-property">"type"</span>: <span class="code-string">"string"</span>,</span>
+<span class="code-line">    <span class="code-property">"enum"</span>: [<span class="code-string">"pending"</span>, <span class="code-string">"paid"</span>,</span>
+<span class="code-line">             <span class="code-string">"shipped"</span>, <span class="code-string">"closed"</span>],</span>
+<span class="code-line">    <span class="code-property">"description"</span>: <span class="code-string">"订单当前状态"</span></span>
+<span class="code-line">  }</span>
+<span class="code-line">}</span>
+            </code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">各管什么</span>
+            <div class="translation-lines">
+              <p class="tl"><strong>type</strong> — 基础类型边界：这里只能是字符串，填数字直接被拒。</p>
+              <p class="tl"><strong>enum</strong> — 价值连城的一行：模型只能四选一，想自由发挥都没门。</p>
+              <p class="tl"><strong>description</strong> — 语义说明书：告诉模型这参数「是什么意思」，帮它选对值，但不约束它。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-info animate-in">
+          <div class="callout-icon">🔑</div>
+          <div class="callout-content">
+            <strong class="callout-title">分工原则</strong>
+            <p><strong>约束归机器</strong>（enum/pattern/format/minimum），<strong>语义归文字</strong>（description）。一旦你把约束写进 description，它就从「合同条款」降级成了「走廊便条」。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">拖拽挑战：这条要求该写在哪？</h2>
+        <p>你有一句需求：「订单状态只能填 待支付、已支付、已发货、已关闭 之一」。它应该放进 schema 的哪个部位？拖一拖：</p>
+
+        <div class="dnd-container" id="dnd-module2">
+          <div class="dnd-chips">
+            <div class="dnd-chip" draggable="true" data-answer="enum">enum 数组</div>
+            <div class="dnd-chip" draggable="true" data-answer="description">description 文字</div>
+            <div class="dnd-chip" draggable="true" data-answer="pattern">pattern 正则</div>
+            <div class="dnd-chip" draggable="true" data-answer="format">format 声明</div>
+          </div>
+          <div class="dnd-zones">
+            <div class="dnd-zone" data-correct="enum">
+              <p class="dnd-zone-label">「只能是这 4 个词里的一个」</p>
+              <div class="dnd-zone-target">拖到这里</div>
+            </div>
+            <div class="dnd-zone" data-correct="description">
+              <p class="dnd-zone-label">「这个参数代表订单当前所处的阶段」</p>
+              <div class="dnd-zone-target">拖到这里</div>
+            </div>
+            <div class="dnd-zone" data-correct="pattern">
+              <p class="dnd-zone-label">「日期必须长得像 2026-09-04」</p>
+              <div class="dnd-zone-target">拖到这里</div>
+            </div>
+            <div class="dnd-zone" data-correct="format">
+              <p class="dnd-zone-label">「这个字符串是标准 ISO 日期」</p>
+              <div class="dnd-zone-target">拖到这里</div>
+            </div>
+          </div>
+          <button class="quiz-check-btn" onclick="checkDnD('dnd-module2')">检查配对</button>
+          <button class="quiz-reset-btn" onclick="resetDnD('dnd-module2')">重置</button>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">为什么模型会「听便条不听话」？</h2>
+        <p>用聊天动画看模型的内心戏：</p>
+
+        <div class="chat-window" id="chat-module2">
+          <div class="chat-messages">
+            <div class="chat-message" data-msg="0" data-sender="actor-a" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-1)">🤖</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-1)">模型</span>
+                <p>我读完了工具 schema。status 的说明写着「订单状态，如已完成、待支付等」。</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="1" data-sender="actor-b" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-2)">💭</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-2)">模型内心</span>
+                <p>"等"……所以我可以填 "done"？"finished"？感觉都行。用户想表达"完成了"，我填 "done" 吧。</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="2" data-sender="actor-c" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-5)">🗄️</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-5)">API</span>
+                <p>HTTP 200 —— "ok, data: null"（服务端不认识 done，但不报错）</p>
+              </div>
+            </div>
+            <div class="chat-message" data-msg="3" data-sender="actor-a" style="display:none">
+              <div class="chat-avatar" style="background: var(--color-actor-1)">🤖</div>
+              <div class="chat-bubble">
+                <span class="chat-sender" style="color: var(--color-actor-1)">模型</span>
+                <p>200！成功了。看起来这个订单暂时没有数据。🤷</p>
+              </div>
+            </div>
+          </div>
+          <div class="chat-typing" id="chat-typing" style="display:none">
+            <div class="chat-avatar" id="chat-module2-typing-avatar">?</div>
+            <div class="chat-typing-dots">
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+              <span class="typing-dot"></span>
+            </div>
+          </div>
+          <div class="chat-controls">
+            <button class="btn chat-next-btn">下一条</button>
+            <button class="btn chat-all-btn">全部播放</button>
+            <button class="btn chat-reset-btn">重播</button>
+            <span class="chat-progress"></span>
+          </div>
+        </div>
+
+        <p style="margin-top: var(--space-8)">看到了吗？整场灾难里没有一个人「违规」——因为根本没有可校验的规则。解药是什么？往下看。</p>
+      </section>
+    </div>
+  </div>
+</section>
+<section class="module" id="module-3" style="background: var(--color-bg)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">03</span>
+      <h1 class="module-title">5 条规则，逐条拆解</h1>
+      <p class="module-subtitle">每条都是「反例 → 正例」的对照，外加一道应用题</p>
+    </header>
+
+    <div class="module-body">
+      <!-- 规则 1 -->
+      <section class="screen animate-in">
+        <span class="badge-code">规则 1</span>
+        <h2 class="screen-heading">枚举优先：能用 enum 就别写 description</h2>
+        <p>还记得模块一的 88/88 → 0/89 吗？这就是它的落地写法：</p>
+
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">❌ 反例</span>
+            <pre><code>
+<span class="code-line"><span class="code-property">"status"</span>: {</span>
+<span class="code-line">  <span class="code-property">"type"</span>: <span class="code-string">"string"</span>,</span>
+<span class="code-line">  <span class="code-property">"description"</span>: <span class="code-string">"订单状态，如已完成、</span></span>
+<span class="code-line"><span class="code-string">    待支付等"</span></span>
+<span class="code-line">}</span>
+<span class="code-line"><span class="code-comment">// 模型自由发挥："completed"</span></span>
+<span class="code-line"><span class="code-comment">// "paid"、"done" 都可能出现</span></span>
+            </code></pre>
+          </div>
+          <div class="translation-code">
+            <span class="translation-label">✅ 正例</span>
+            <pre><code>
+<span class="code-line"><span class="code-property">"status"</span>: {</span>
+<span class="code-line">  <span class="code-property">"type"</span>: <span class="code-string">"string"</span>,</span>
+<span class="code-line">  <span class="code-property">"enum"</span>: [<span class="code-string">"pending"</span>, <span class="code-string">"paid"</span>,</span>
+<span class="code-line">    <span class="code-string">"shipped"</span>, <span class="code-string">"closed"</span>]</span>
+<span class="code-line">}</span>
+<span class="code-line"><span class="code-comment">// 模型只能四选一，</span></span>
+<span class="code-line"><span class="code-comment">// 想错都没有机会</span></span>
+            </code></pre>
+          </div>
+        </div>
+
+        <div class="quiz-container" id="quiz-rule1">
+          <div class="scenario-block">
+            <div class="scenario-context">
+              <span class="scenario-label">应用题</span>
+              <p>你在给一个「发送邮件」工具写 schema，priority 参数希望模型填 high / normal / low 之一。怎么写？</p>
+            </div>
+            <div class="quiz-question-block"
+                 data-correct="option-b"
+                 data-explanation-right="对！有限集合 = enum。这是唯一能让『越界』在机器层面直接失败的写法。"
+                 data-explanation-wrong="再想想：只要有自由输入的可能，模型就可能在某天填出 urgent、P0、important。列出来的词汇，一定要升级成 enum。">
+              <h3 class="quiz-question">priority 参数的正确写法是？</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>description 写「优先级，如 high、normal、low 等」</span>
+                </button>
+                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>enum: ["high", "normal", "low"]</span>
+                </button>
+                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>type 用 string，服务端再做大小写转换兜底</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-rule1')">检查答案</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-rule1')">再试一次</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 规则 2 -->
+      <section class="screen animate-in">
+        <span class="badge-code">规则 2</span>
+        <h2 class="screen-heading">约束下沉：格式写进 pattern/format，别靠「请确保」</h2>
+
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">❌ 反例</span>
+            <pre><code>
+<span class="code-line"><span class="code-property">"date"</span>: {</span>
+<span class="code-line">  <span class="code-property">"type"</span>: <span class="code-string">"string"</span>,</span>
+<span class="code-line">  <span class="code-property">"description"</span>: <span class="code-string">"请确保使用</span></span>
+<span class="code-line"><span class="code-string">    YYYY-MM-DD 格式"</span></span>
+<span class="code-line">}</span>
+<span class="code-line"><span class="code-comment">// prose 约束是建议，不是边界</span></span>
+            </code></pre>
+          </div>
+          <div class="translation-code">
+            <span class="translation-label">✅ 正例</span>
+            <pre><code>
+<span class="code-line"><span class="code-property">"date"</span>: {</span>
+<span class="code-line">  <span class="code-property">"type"</span>: <span class="code-string">"string"</span>,</span>
+<span class="code-line">  <span class="code-property">"format"</span>: <span class="code-string">"date"</span>,</span>
+<span class="code-line">  <span class="code-property">"pattern"</span>: <span class="code-string">"^\\d{4}-\\d{2}-\\d{2}$"</span></span>
+<span class="code-line">}</span>
+<span class="code-line"><span class="code-comment">// 机器可校验：</span></span>
+<span class="code-line"><span class="code-comment">// 111/111 诚实报错的那一类</span></span>
+            </code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-accent animate-in">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">检测口诀</strong>
+            <p>看到 description 里有「请确保」「必须」「不能超过」——警报响起：这句话该搬家到机器可校验的字段里去。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 规则 3 -->
+      <section class="screen animate-in">
+        <span class="badge-code">规则 3</span>
+        <h2 class="screen-heading">一词一义：名字里不许有歧义缩写</h2>
+
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">❌ 反例</span>
+            <pre><code>
+<span class="code-line">{ <span class="code-property">"name"</span>: <span class="code-string">"get_usr_info"</span>,</span>
+<span class="code-line">  <span class="code-property">"parameters"</span>: {</span>
+<span class="code-line">    <span class="code-property">"uid"</span>: <span class="code-string">"用户ID或用户名"</span>,</span>
+<span class="code-line">    <span class="code-property">"ts"</span>: <span class="code-string">"时间范围或时间戳"</span></span>
+<span class="code-line">  } }</span>
+<span class="code-line"><span class="code-comment">// usr 是 user 还是用户组？</span></span>
+<span class="code-line"><span class="code-comment">// ts 接受几种形态？模型只能猜</span></span>
+            </code></pre>
+          </div>
+          <div class="translation-code">
+            <span class="translation-label">✅ 正例</span>
+            <pre><code>
+<span class="code-line">{ <span class="code-property">"name"</span>: <span class="code-string">"get_user_profile"</span>,</span>
+<span class="code-line">  <span class="code-property">"parameters"</span>: {</span>
+<span class="code-line">    <span class="code-property">"user_id"</span>: <span class="code-string">"唯一数字ID"</span>,</span>
+<span class="code-line">    <span class="code-property">"timestamp"</span>: <span class="code-string">"ISO 8601 时间戳"</span></span>
+<span class="code-line">  } }</span>
+<span class="code-line"><span class="code-comment">// 一词一义，无从猜错</span></span>
+            </code></pre>
+          </div>
+        </div>
+
+        <p>一个参数描述里出现「或」字，就是<strong>幻觉参数的温床</strong>——模型猜错分支，比猜错值更难排查。</p>
+      </section>
+
+      <!-- 规则 4 -->
+      <section class="screen animate-in">
+        <span class="badge-code">规则 4</span>
+        <h2 class="screen-heading">错误设计：报 422 + 结构化错误，别报 200 + 模糊文案</h2>
+
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">❌ 反例</span>
+            <pre><code>
+<span class="code-line">HTTP 200</span>
+<span class="code-line">{ <span class="code-property">"code"</span>: <span class="code-number">0</span>,</span>
+<span class="code-line">  <span class="code-property">"msg"</span>: <span class="code-string">"ok"</span>,</span>
+<span class="code-line">  <span class="code-property">"data"</span>: <span class="code-keyword">null</span> }</span>
+<span class="code-line"><span class="code-comment">// agent 无从分支：</span></span>
+<span class="code-line"><span class="code-comment">// 是没命中，还是没理解？</span></span>
+<span class="code-line"><span class="code-comment">// 41% 虚报成功率的源头</span></span>
+            </code></pre>
+          </div>
+          <div class="translation-code">
+            <span class="translation-label">✅ 正例</span>
+            <pre><code>
+<span class="code-line">HTTP 422</span>
+<span class="code-line">{ <span class="code-property">"error"</span>: {</span>
+<span class="code-line">    <span class="code-property">"field"</span>: <span class="code-string">"date"</span>,</span>
+<span class="code-line">    <span class="code-property">"constraint"</span>: <span class="code-string">"pattern"</span>,</span>
+<span class="code-line">    <span class="code-property">"expected"</span>: <span class="code-string">"YYYY-MM-DD"</span>,</span>
+<span class="code-line">    <span class="code-property">"received"</span>: <span class="code-string">"09/04/2026"</span> } }</span>
+<span class="code-line"><span class="code-comment">// agent 拿到修复所需的全部信息</span></span>
+            </code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-info animate-in">
+          <div class="callout-icon">🔧</div>
+          <div class="callout-content">
+            <strong class="callout-title">为什么重要</strong>
+            <p>结构化错误是 agent <strong>重试和自我修复的触发信号</strong>。「expected vs received」让模型一眼看出差在哪，下一轮就能改对。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 规则 5 -->
+      <section class="screen animate-in">
+        <span class="badge-code">规则 5</span>
+        <h2 class="screen-heading">描述有界：description 只写语义，不承载约束</h2>
+
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">❌ 反例</span>
+            <pre><code>
+<span class="code-line"><span class="code-property">"count"</span>: {</span>
+<span class="code-line">  <span class="code-property">"type"</span>: <span class="code-string">"integer"</span>,</span>
+<span class="code-line">  <span class="code-property">"description"</span>: <span class="code-string">"返回条数，不能超过100，</span></span>
+<span class="code-line"><span class="code-string">    必须是正数，否则请求无效"</span></span>
+<span class="code-line">}</span>
+<span class="code-line"><span class="code-comment">// 约束藏在散文里 = 没有约束</span></span>
+            </code></pre>
+          </div>
+          <div class="translation-code">
+            <span class="translation-label">✅ 正例</span>
+            <pre><code>
+<span class="code-line"><span class="code-property">"count"</span>: {</span>
+<span class="code-line">  <span class="code-property">"type"</span>: <span class="code-string">"integer"</span>,</span>
+<span class="code-line">  <span class="code-property">"minimum"</span>: <span class="code-number">1</span>,</span>
+<span class="code-line">  <span class="code-property">"maximum"</span>: <span class="code-number">100</span>,</span>
+<span class="code-line">  <span class="code-property">"description"</span>: <span class="code-string">"单页返回条数"</span></span>
+<span class="code-line">}</span>
+<span class="code-line"><span class="code-comment">// 语义归语义，约束归机器</span></span>
+            </code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- 综合 quiz -->
+      <section class="screen animate-in">
+        <h2 class="screen-heading">综合找茬：这段 schema 中的几条毒药？</h2>
+        <p>这是 SilenProbe 风格的真实翻车现场。哪条规则被违反得最致命？</p>
+
+        <div class="quiz-container" id="quiz-rule-final">
+          <div class="scenario-block">
+            <div class="scenario-context">
+              <span class="scenario-label">代码现场</span>
+              <pre><code>"search_orders": {
+  "description": "查询订单，date_range 请确保用 YYYY/MM/DD",
+  "parameters": {
+    "kw": "关键词或订单号",
+    "limit": { "type": "integer", "description": "条数，必须在1-50之间" }
+  }
+}</code></pre>
+            </div>
+            <div class="quiz-question-block"
+                 data-correct="option-c"
+                 data-explanation-right="完全正确！『请确保』的日期格式是规则 2 的经典翻车：61 例中 44 例静默失败，Agent 根本不知道自己错了。其他几处也该修，但只有这一处会无声地坏掉。"
+                 data-explanation-wrong="其实这段 schema 五毒俱全——kw 违反规则 3、limit 违反规则 5、date_range 违反规则 2。但最致命的是 prose 格式约束：它是唯一会静默失败、让你完全察觉不到的。">
+              <h3 class="quiz-question">哪一处最可能导致「静默失败」？</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>工具名 search_orders 太长</span>
+                </button>
+                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>kw 缩写有歧义（规则 3）</span>
+                </button>
+                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>date_range 用「请确保」写格式约束（规则 2）</span>
+                </button>
+                <button class="quiz-option" data-value="option-d" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>limit 的约束写在 description 里（规则 5）</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-rule-final')">检查答案</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-rule-final')">再试一次</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
+<section class="module" id="module-4" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">04</span>
+      <h1 class="module-title">从规则到习惯</h1>
+      <p class="module-subtitle">写完 schema 之后，用「schema-lint 思维」过一遍</p>
+    </header>
+
+    <div class="module-body">
+      <section class="screen animate-in">
+        <h2 class="screen-heading">把 5 条规则变成一道检查清单</h2>
+        <p>像机场安检一样，每个参数都要过这四道门：</p>
+
+        <div class="step-cards stagger-children">
+          <div class="step-card animate-in">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <strong>词汇是有限的吗？</strong>
+              <p>是 → 升级为 enum。是自由文本 → 下一道门。</p>
+            </div>
+          </div>
+          <div class="step-card animate-in">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <strong>有格式要求吗？</strong>
+              <p>写进 pattern / format。description 里不许出现「请确保 / 必须 / 不能超过」。</p>
+            </div>
+          </div>
+          <div class="step-card animate-in">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <strong>名字有「或」吗？</strong>
+              <p>一个参数一个意思。uid / ts / kw 这类缩写统统展开。</p>
+            </div>
+          </div>
+          <div class="step-card animate-in">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <strong>报错会说人话吗？</strong>
+              <p>约束违反 → 422 + field/constraint/expected/received。永不返回 200 + null。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">两条路径，两种命运</h2>
+        <p>最后再看一眼完整数据流——这次你能看懂每一步为什么发生了：</p>
+
+        <div class="flow-animation" data-steps='[
+          {"highlight":"flow-actor-1","label":"路径 A：schema 写 prose 约束。模型按自己的理解填参数","packet":true,"from":"actor-1","to":"actor-2"},
+          {"highlight":"flow-actor-2","label":"API 静默接受错误值，返回 200 + 空数据"},
+          {"highlight":"flow-actor-1","label":"模型把空数据当事实，输出错误结论给用户"},
+          {"highlight":"flow-actor-1","label":"路径 B：schema 用 enum + pattern。模型只能合法取值","packet":true,"from":"actor-1","to":"actor-2"},
+          {"highlight":"flow-actor-2","label":"即使出错，API 返回 422 + 结构化错误","packet":true,"from":"actor-2","to":"actor-1"},
+          {"highlight":"flow-actor-1","label":"模型读 expected vs received，自动修正重试 → 成功"}
+        ]'>
+          <div class="flow-actors">
+            <div class="flow-actor" id="flow-actor-1">
+              <div class="flow-actor-icon">🤖</div>
+              <span>Agent</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-2">
+              <div class="flow-actor-icon">🗄️</div>
+              <span>你的 API</span>
+            </div>
+          </div>
+          <div class="flow-packet" id="flow-packet"></div>
+          <div class="flow-step-label" id="flow-label">点击「下一步」开始</div>
+          <div class="flow-controls">
+            <button class="btn flow-next-btn">下一步</button>
+            <button class="btn flow-reset-btn">重新开始</button>
+            <span class="flow-progress"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">毕业测验</h2>
+        <div class="quiz-container" id="quiz-module4">
+          <div class="scenario-block">
+            <div class="scenario-context">
+              <span class="scenario-label">最终场景</span>
+              <p>你的 Agent 连续三天告诉用户「查无此订单」，但用户坚称订单存在。日志显示工具全部返回 200。按本课的思路，第一步做什么？</p>
+            </div>
+            <div class="quiz-question-block"
+                 data-correct="option-a"
+                 data-explanation-right="正是！200 + 空结果正是静默失败的指纹。先检查 schema 里是否有 prose 约束（如「请确保订单号为 XX 格式」）和模糊的 200 响应——八成是模型填错了参数而 API 没拦住。"
+                 data-explanation-wrong="日志里 200 都算『成功』，所以问题大概率不在调用频率或缓存。回想模块一：HTTP 200 + 可解析 body 会让 Agent 把失败当成功——先查 schema 的约束形式。">
+              <h3 class="quiz-question">第一步该做什么？</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>检查工具 schema：是否有 prose 约束 + 一律返回 200 的错误设计</span>
+                </button>
+                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>怀疑 API 限流，加大调用间隔重试</span>
+                </button>
+                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>换一个更强的模型，问题应该自然消失</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module4')">检查答案</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module4')">再试一次</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">一句话带走</h2>
+        <div class="callout callout-accent animate-in">
+          <div class="callout-icon">🎯</div>
+          <div class="callout-content">
+            <p style="font-size: var(--text-xl); font-weight: 600; line-height: 1.6">Agent 工具的可靠性一半在你 schema 的形式化程度——模型诚实地执行你<strong>机器可校验</strong>的约束，也诚实地辜负你写在<strong>散文</strong>里的期望。</p>
+          </div>
+        </div>
+        <p style="margin-top: var(--space-8); color: var(--color-text-secondary)">延伸阅读：SilentProbe — Measuring Silent Failure in Production APIs Used as Agent Tools（arXiv:2609.00035）</p>
+      </section>
+    </div>
+  </div>
+</section>
+  </main>
+
+</body>
+</html>

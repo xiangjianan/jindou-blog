@@ -1,0 +1,125 @@
+<section class="module" id="module-4" style="background: var(--color-bg-warm)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">04</span>
+      <h1 class="module-title">从规则到习惯</h1>
+      <p class="module-subtitle">写完 schema 之后，用「schema-lint 思维」过一遍</p>
+    </header>
+
+    <div class="module-body">
+      <section class="screen animate-in">
+        <h2 class="screen-heading">把 5 条规则变成一道检查清单</h2>
+        <p>像机场安检一样，每个参数都要过这四道门：</p>
+
+        <div class="step-cards stagger-children">
+          <div class="step-card animate-in">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <strong>词汇是有限的吗？</strong>
+              <p>是 → 升级为 enum。是自由文本 → 下一道门。</p>
+            </div>
+          </div>
+          <div class="step-card animate-in">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <strong>有格式要求吗？</strong>
+              <p>写进 pattern / format。description 里不许出现「请确保 / 必须 / 不能超过」。</p>
+            </div>
+          </div>
+          <div class="step-card animate-in">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <strong>名字有「或」吗？</strong>
+              <p>一个参数一个意思。uid / ts / kw 这类缩写统统展开。</p>
+            </div>
+          </div>
+          <div class="step-card animate-in">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <strong>报错会说人话吗？</strong>
+              <p>约束违反 → 422 + field/constraint/expected/received。永不返回 200 + null。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">两条路径，两种命运</h2>
+        <p>最后再看一眼完整数据流——这次你能看懂每一步为什么发生了：</p>
+
+        <div class="flow-animation" data-steps='[
+          {"highlight":"flow-actor-1","label":"路径 A：schema 写 prose 约束。模型按自己的理解填参数","packet":true,"from":"actor-1","to":"actor-2"},
+          {"highlight":"flow-actor-2","label":"API 静默接受错误值，返回 200 + 空数据"},
+          {"highlight":"flow-actor-1","label":"模型把空数据当事实，输出错误结论给用户"},
+          {"highlight":"flow-actor-1","label":"路径 B：schema 用 enum + pattern。模型只能合法取值","packet":true,"from":"actor-1","to":"actor-2"},
+          {"highlight":"flow-actor-2","label":"即使出错，API 返回 422 + 结构化错误","packet":true,"from":"actor-2","to":"actor-1"},
+          {"highlight":"flow-actor-1","label":"模型读 expected vs received，自动修正重试 → 成功"}
+        ]'>
+          <div class="flow-actors">
+            <div class="flow-actor" id="flow-actor-1">
+              <div class="flow-actor-icon">🤖</div>
+              <span>Agent</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-2">
+              <div class="flow-actor-icon">🗄️</div>
+              <span>你的 API</span>
+            </div>
+          </div>
+          <div class="flow-packet" id="flow-packet"></div>
+          <div class="flow-step-label" id="flow-label">点击「下一步」开始</div>
+          <div class="flow-controls">
+            <button class="btn flow-next-btn">下一步</button>
+            <button class="btn flow-reset-btn">重新开始</button>
+            <span class="flow-progress"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">毕业测验</h2>
+        <div class="quiz-container" id="quiz-module4">
+          <div class="scenario-block">
+            <div class="scenario-context">
+              <span class="scenario-label">最终场景</span>
+              <p>你的 Agent 连续三天告诉用户「查无此订单」，但用户坚称订单存在。日志显示工具全部返回 200。按本课的思路，第一步做什么？</p>
+            </div>
+            <div class="quiz-question-block"
+                 data-correct="option-a"
+                 data-explanation-right="正是！200 + 空结果正是静默失败的指纹。先检查 schema 里是否有 prose 约束（如「请确保订单号为 XX 格式」）和模糊的 200 响应——八成是模型填错了参数而 API 没拦住。"
+                 data-explanation-wrong="日志里 200 都算『成功』，所以问题大概率不在调用频率或缓存。回想模块一：HTTP 200 + 可解析 body 会让 Agent 把失败当成功——先查 schema 的约束形式。">
+              <h3 class="quiz-question">第一步该做什么？</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>检查工具 schema：是否有 prose 约束 + 一律返回 200 的错误设计</span>
+                </button>
+                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>怀疑 API 限流，加大调用间隔重试</span>
+                </button>
+                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>换一个更强的模型，问题应该自然消失</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module4')">检查答案</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module4')">再试一次</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">一句话带走</h2>
+        <div class="callout callout-accent animate-in">
+          <div class="callout-icon">🎯</div>
+          <div class="callout-content">
+            <p style="font-size: var(--text-xl); font-weight: 600; line-height: 1.6">Agent 工具的可靠性一半在你 schema 的形式化程度——模型诚实地执行你<strong>机器可校验</strong>的约束，也诚实地辜负你写在<strong>散文</strong>里的期望。</p>
+          </div>
+        </div>
+        <p style="margin-top: var(--space-8); color: var(--color-text-secondary)">延伸阅读：SilentProbe — Measuring Silent Failure in Production APIs Used as Agent Tools（arXiv:2609.00035）</p>
+      </section>
+    </div>
+  </div>
+</section>

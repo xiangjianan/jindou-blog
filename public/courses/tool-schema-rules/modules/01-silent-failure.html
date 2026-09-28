@@ -1,0 +1,148 @@
+<section class="module" id="module-1" style="background: var(--color-bg)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">01</span>
+      <h1 class="module-title">Agent 为什么会静默失败？</h1>
+      <p class="module-subtitle">一个横跨 72 万个参数的审计，揭开了 Agent 工具调用最隐蔽的坑</p>
+    </header>
+
+    <div class="module-body">
+      <section class="screen animate-in">
+        <h2 class="screen-heading">先看一组数字</h2>
+        <p>2026 年，一项叫 <span class="term" data-definition="SilentProbe 是一项学术审计研究（arXiv:2609.00035），专门测量『静默失败』——API 装作成功、实际失败的现象。">SilentProbe</span> 的研究审计了
+        <span class="term" data-definition="OpenAPI 是一种用 JSON 描述 API 的标准格式。你给 AI Agent 配置工具时写的就是类似的东西。">OpenAPI</span> 文档，规模大得吓人：</p>
+        <div class="pattern-cards stagger-children">
+          <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-1)">
+            <div class="pattern-icon" style="background: var(--color-actor-1)">📄</div>
+            <h4 class="pattern-title">2,501 份文档</h4>
+            <p class="pattern-desc">覆盖 27 家厂商的真实线上接口</p>
+          </div>
+          <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-2)">
+            <div class="pattern-icon" style="background: var(--color-actor-2)">🔢</div>
+            <h4 class="pattern-title">721,320 个参数</h4>
+            <p class="pattern-desc">每一个都做了机器可校验性检查</p>
+          </div>
+          <div class="pattern-card animate-in" style="border-top: 3px solid var(--color-actor-3)">
+            <div class="pattern-icon" style="background: var(--color-actor-3)">🧪</div>
+            <h4 class="pattern-title">Live 扰动测试</h4>
+            <p class="pattern-desc">故意发错参数，看 API 怎么回应</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">结果很扎心</h2>
+        <p>研究者故意发错参数，然后观察 API 的反应。两种写法，命运天差地别：</p>
+
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">约束写在描述文字里</span>
+            <pre><code>
+<span class="code-line"><span class="code-string">"description"</span>: <span class="code-string">"请确保 date 为</span></span>
+<span class="code-line"><span class="code-string">  ISO 日期格式"</span></span>
+<span class="code-line"> </span>
+<span class="code-line"><span class="code-comment">// 结果：61 例中 44 例</span></span>
+<span class="code-line"><span class="code-comment">// API 返回 HTTP 200 + 正常 body</span></span>
+<span class="code-line"><span class="code-comment">// Agent 完全不知道自己错了</span></span>
+            </code></pre>
+          </div>
+          <div class="translation-english">
+            <span class="translation-label">PLAIN ENGLISH</span>
+            <div class="translation-lines">
+              <p class="tl">约束被写成了「客气的请求」，不是硬性边界。</p>
+              <p class="tl">模型发错了日期格式，服务端却照样收下。</p>
+              <p class="tl">返回 200 = "成功"？Agent 认为自己做对了。</p>
+              <p class="tl">这就是<strong>静默失败</strong>：错了，但没人知道。</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-accent animate-in">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">对比组</strong>
+            <p>写成机器可校验约束（<span class="term" data-definition="enum：枚举，把参数允许的值一一列出来，比如 [pending, paid]，模型只能四选一。">enum</span> / <span class="term" data-definition="pattern：用正则表达式定义参数必须匹配的格式，机器可以直接检查对错。">pattern</span> / format）的参数：<strong>111 次错误全部诚实报错</strong>，无一静默失败。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">最戏剧的一组数据</h2>
+        <p>同一批模型、同一批厂商，只改一行 schema，行为天翻地覆：</p>
+
+        <div class="flow-animation" data-steps='[
+          {"highlight":"flow-actor-1","label":"模型需要填 status 参数，schema 里只有一句中文描述"},
+          {"highlight":"flow-actor-1","label":"模型自由发挥：completed / paid / done 都可能出现","packet":true,"from":"actor-1","to":"actor-2"},
+          {"highlight":"flow-actor-2","label":"服务端不认识这些词，88 次里 88 次用错"},
+          {"highlight":"flow-actor-2","label":"现在把词汇提升为 enum：[pending, paid, shipped, closed]"},
+          {"highlight":"flow-actor-1","label":"模型只能从 4 个合法值里选","packet":true,"from":"actor-1","to":"actor-2"},
+          {"highlight":"flow-actor-2","label":"结果：89 次调用，0 次用错"}
+        ]'>
+          <div class="flow-actors">
+            <div class="flow-actor" id="flow-actor-1">
+              <div class="flow-actor-icon">🤖</div>
+              <span>模型</span>
+            </div>
+            <div class="flow-actor" id="flow-actor-2">
+              <div class="flow-actor-icon">🗄️</div>
+              <span>API 服务端</span>
+            </div>
+          </div>
+          <div class="flow-packet" id="flow-packet"></div>
+          <div class="flow-step-label" id="flow-label">点击「下一步」开始</div>
+          <div class="flow-controls">
+            <button class="btn flow-next-btn">下一步</button>
+            <button class="btn flow-reset-btn">重新开始</button>
+            <span class="flow-progress"></span>
+          </div>
+        </div>
+
+        <div class="callout callout-accent animate-in">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">核心洞察</strong>
+            <p>模型不是不守规矩——是你的 schema 没给它守规矩的机会。<strong>约束的形式</strong>，决定了 Agent 的可靠性。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="screen animate-in">
+        <h2 class="screen-heading">热身检查</h2>
+        <p>来，用一个场景验证你抓住重点没有：</p>
+        <div class="quiz-container" id="quiz-module1">
+          <div class="scenario-block">
+            <div class="scenario-context">
+              <span class="scenario-label">场景</span>
+              <p>你的 Agent 调用了一个天气工具，参数 city 填了「北京」而不是工具期望的 "beijing"。API 返回了 HTTP 200 和一段"暂无该城市数据"的文案。Agent 接下来会怎么做？</p>
+            </div>
+            <div class="quiz-question-block"
+                 data-correct="option-b"
+                 data-explanation-right="正是！HTTP 200 + 可解析的 body = Agent 眼中的『成功』。它不会重试、不会改参数，只会把『暂无数据』当作事实告诉你——这就是静默失败的完整链条。"
+                 data-explanation-wrong="注意：Agent 不会『感知』到出错，因为它看到的是 200 成功状态码和一段正常的文本。没有报错信号，它就没有重试或纠正的理由。">
+              <h3 class="quiz-question">Agent 会怎么理解这次调用？</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>察觉出错了，自动换个格式重试</span>
+                </button>
+                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>认为调用成功了，把「暂无数据」当作事实返回给用户</span>
+                </button>
+                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>抛出异常，请求人类介入</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-module1')">检查答案</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-module1')">再试一次</button>
+          </div>
+        </div>
+
+        <p style="margin-top: var(--space-8)">答案就藏在 schema 的写法里。下一模块，我们解剖 schema 本身。</p>
+      </section>
+    </div>
+  </div>
+</section>

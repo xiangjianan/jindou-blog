@@ -1,0 +1,272 @@
+<section class="module" id="module-3" style="background: var(--color-bg)">
+  <div class="module-content">
+    <header class="module-header animate-in">
+      <span class="module-number">03</span>
+      <h1 class="module-title">5 条规则，逐条拆解</h1>
+      <p class="module-subtitle">每条都是「反例 → 正例」的对照，外加一道应用题</p>
+    </header>
+
+    <div class="module-body">
+      <!-- 规则 1 -->
+      <section class="screen animate-in">
+        <span class="badge-code">规则 1</span>
+        <h2 class="screen-heading">枚举优先：能用 enum 就别写 description</h2>
+        <p>还记得模块一的 88/88 → 0/89 吗？这就是它的落地写法：</p>
+
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">❌ 反例</span>
+            <pre><code>
+<span class="code-line"><span class="code-property">"status"</span>: {</span>
+<span class="code-line">  <span class="code-property">"type"</span>: <span class="code-string">"string"</span>,</span>
+<span class="code-line">  <span class="code-property">"description"</span>: <span class="code-string">"订单状态，如已完成、</span></span>
+<span class="code-line"><span class="code-string">    待支付等"</span></span>
+<span class="code-line">}</span>
+<span class="code-line"><span class="code-comment">// 模型自由发挥："completed"</span></span>
+<span class="code-line"><span class="code-comment">// "paid"、"done" 都可能出现</span></span>
+            </code></pre>
+          </div>
+          <div class="translation-code">
+            <span class="translation-label">✅ 正例</span>
+            <pre><code>
+<span class="code-line"><span class="code-property">"status"</span>: {</span>
+<span class="code-line">  <span class="code-property">"type"</span>: <span class="code-string">"string"</span>,</span>
+<span class="code-line">  <span class="code-property">"enum"</span>: [<span class="code-string">"pending"</span>, <span class="code-string">"paid"</span>,</span>
+<span class="code-line">    <span class="code-string">"shipped"</span>, <span class="code-string">"closed"</span>]</span>
+<span class="code-line">}</span>
+<span class="code-line"><span class="code-comment">// 模型只能四选一，</span></span>
+<span class="code-line"><span class="code-comment">// 想错都没有机会</span></span>
+            </code></pre>
+          </div>
+        </div>
+
+        <div class="quiz-container" id="quiz-rule1">
+          <div class="scenario-block">
+            <div class="scenario-context">
+              <span class="scenario-label">应用题</span>
+              <p>你在给一个「发送邮件」工具写 schema，priority 参数希望模型填 high / normal / low 之一。怎么写？</p>
+            </div>
+            <div class="quiz-question-block"
+                 data-correct="option-b"
+                 data-explanation-right="对！有限集合 = enum。这是唯一能让『越界』在机器层面直接失败的写法。"
+                 data-explanation-wrong="再想想：只要有自由输入的可能，模型就可能在某天填出 urgent、P0、important。列出来的词汇，一定要升级成 enum。">
+              <h3 class="quiz-question">priority 参数的正确写法是？</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>description 写「优先级，如 high、normal、low 等」</span>
+                </button>
+                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>enum: ["high", "normal", "low"]</span>
+                </button>
+                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>type 用 string，服务端再做大小写转换兜底</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-rule1')">检查答案</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-rule1')">再试一次</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 规则 2 -->
+      <section class="screen animate-in">
+        <span class="badge-code">规则 2</span>
+        <h2 class="screen-heading">约束下沉：格式写进 pattern/format，别靠「请确保」</h2>
+
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">❌ 反例</span>
+            <pre><code>
+<span class="code-line"><span class="code-property">"date"</span>: {</span>
+<span class="code-line">  <span class="code-property">"type"</span>: <span class="code-string">"string"</span>,</span>
+<span class="code-line">  <span class="code-property">"description"</span>: <span class="code-string">"请确保使用</span></span>
+<span class="code-line"><span class="code-string">    YYYY-MM-DD 格式"</span></span>
+<span class="code-line">}</span>
+<span class="code-line"><span class="code-comment">// prose 约束是建议，不是边界</span></span>
+            </code></pre>
+          </div>
+          <div class="translation-code">
+            <span class="translation-label">✅ 正例</span>
+            <pre><code>
+<span class="code-line"><span class="code-property">"date"</span>: {</span>
+<span class="code-line">  <span class="code-property">"type"</span>: <span class="code-string">"string"</span>,</span>
+<span class="code-line">  <span class="code-property">"format"</span>: <span class="code-string">"date"</span>,</span>
+<span class="code-line">  <span class="code-property">"pattern"</span>: <span class="code-string">"^\\d{4}-\\d{2}-\\d{2}$"</span></span>
+<span class="code-line">}</span>
+<span class="code-line"><span class="code-comment">// 机器可校验：</span></span>
+<span class="code-line"><span class="code-comment">// 111/111 诚实报错的那一类</span></span>
+            </code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-accent animate-in">
+          <div class="callout-icon">💡</div>
+          <div class="callout-content">
+            <strong class="callout-title">检测口诀</strong>
+            <p>看到 description 里有「请确保」「必须」「不能超过」——警报响起：这句话该搬家到机器可校验的字段里去。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 规则 3 -->
+      <section class="screen animate-in">
+        <span class="badge-code">规则 3</span>
+        <h2 class="screen-heading">一词一义：名字里不许有歧义缩写</h2>
+
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">❌ 反例</span>
+            <pre><code>
+<span class="code-line">{ <span class="code-property">"name"</span>: <span class="code-string">"get_usr_info"</span>,</span>
+<span class="code-line">  <span class="code-property">"parameters"</span>: {</span>
+<span class="code-line">    <span class="code-property">"uid"</span>: <span class="code-string">"用户ID或用户名"</span>,</span>
+<span class="code-line">    <span class="code-property">"ts"</span>: <span class="code-string">"时间范围或时间戳"</span></span>
+<span class="code-line">  } }</span>
+<span class="code-line"><span class="code-comment">// usr 是 user 还是用户组？</span></span>
+<span class="code-line"><span class="code-comment">// ts 接受几种形态？模型只能猜</span></span>
+            </code></pre>
+          </div>
+          <div class="translation-code">
+            <span class="translation-label">✅ 正例</span>
+            <pre><code>
+<span class="code-line">{ <span class="code-property">"name"</span>: <span class="code-string">"get_user_profile"</span>,</span>
+<span class="code-line">  <span class="code-property">"parameters"</span>: {</span>
+<span class="code-line">    <span class="code-property">"user_id"</span>: <span class="code-string">"唯一数字ID"</span>,</span>
+<span class="code-line">    <span class="code-property">"timestamp"</span>: <span class="code-string">"ISO 8601 时间戳"</span></span>
+<span class="code-line">  } }</span>
+<span class="code-line"><span class="code-comment">// 一词一义，无从猜错</span></span>
+            </code></pre>
+          </div>
+        </div>
+
+        <p>一个参数描述里出现「或」字，就是<strong>幻觉参数的温床</strong>——模型猜错分支，比猜错值更难排查。</p>
+      </section>
+
+      <!-- 规则 4 -->
+      <section class="screen animate-in">
+        <span class="badge-code">规则 4</span>
+        <h2 class="screen-heading">错误设计：报 422 + 结构化错误，别报 200 + 模糊文案</h2>
+
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">❌ 反例</span>
+            <pre><code>
+<span class="code-line">HTTP 200</span>
+<span class="code-line">{ <span class="code-property">"code"</span>: <span class="code-number">0</span>,</span>
+<span class="code-line">  <span class="code-property">"msg"</span>: <span class="code-string">"ok"</span>,</span>
+<span class="code-line">  <span class="code-property">"data"</span>: <span class="code-keyword">null</span> }</span>
+<span class="code-line"><span class="code-comment">// agent 无从分支：</span></span>
+<span class="code-line"><span class="code-comment">// 是没命中，还是没理解？</span></span>
+<span class="code-line"><span class="code-comment">// 41% 虚报成功率的源头</span></span>
+            </code></pre>
+          </div>
+          <div class="translation-code">
+            <span class="translation-label">✅ 正例</span>
+            <pre><code>
+<span class="code-line">HTTP 422</span>
+<span class="code-line">{ <span class="code-property">"error"</span>: {</span>
+<span class="code-line">    <span class="code-property">"field"</span>: <span class="code-string">"date"</span>,</span>
+<span class="code-line">    <span class="code-property">"constraint"</span>: <span class="code-string">"pattern"</span>,</span>
+<span class="code-line">    <span class="code-property">"expected"</span>: <span class="code-string">"YYYY-MM-DD"</span>,</span>
+<span class="code-line">    <span class="code-property">"received"</span>: <span class="code-string">"09/04/2026"</span> } }</span>
+<span class="code-line"><span class="code-comment">// agent 拿到修复所需的全部信息</span></span>
+            </code></pre>
+          </div>
+        </div>
+
+        <div class="callout callout-info animate-in">
+          <div class="callout-icon">🔧</div>
+          <div class="callout-content">
+            <strong class="callout-title">为什么重要</strong>
+            <p>结构化错误是 agent <strong>重试和自我修复的触发信号</strong>。「expected vs received」让模型一眼看出差在哪，下一轮就能改对。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 规则 5 -->
+      <section class="screen animate-in">
+        <span class="badge-code">规则 5</span>
+        <h2 class="screen-heading">描述有界：description 只写语义，不承载约束</h2>
+
+        <div class="translation-block animate-in">
+          <div class="translation-code">
+            <span class="translation-label">❌ 反例</span>
+            <pre><code>
+<span class="code-line"><span class="code-property">"count"</span>: {</span>
+<span class="code-line">  <span class="code-property">"type"</span>: <span class="code-string">"integer"</span>,</span>
+<span class="code-line">  <span class="code-property">"description"</span>: <span class="code-string">"返回条数，不能超过100，</span></span>
+<span class="code-line"><span class="code-string">    必须是正数，否则请求无效"</span></span>
+<span class="code-line">}</span>
+<span class="code-line"><span class="code-comment">// 约束藏在散文里 = 没有约束</span></span>
+            </code></pre>
+          </div>
+          <div class="translation-code">
+            <span class="translation-label">✅ 正例</span>
+            <pre><code>
+<span class="code-line"><span class="code-property">"count"</span>: {</span>
+<span class="code-line">  <span class="code-property">"type"</span>: <span class="code-string">"integer"</span>,</span>
+<span class="code-line">  <span class="code-property">"minimum"</span>: <span class="code-number">1</span>,</span>
+<span class="code-line">  <span class="code-property">"maximum"</span>: <span class="code-number">100</span>,</span>
+<span class="code-line">  <span class="code-property">"description"</span>: <span class="code-string">"单页返回条数"</span></span>
+<span class="code-line">}</span>
+<span class="code-line"><span class="code-comment">// 语义归语义，约束归机器</span></span>
+            </code></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- 综合 quiz -->
+      <section class="screen animate-in">
+        <h2 class="screen-heading">综合找茬：这段 schema 中的几条毒药？</h2>
+        <p>这是 SilenProbe 风格的真实翻车现场。哪条规则被违反得最致命？</p>
+
+        <div class="quiz-container" id="quiz-rule-final">
+          <div class="scenario-block">
+            <div class="scenario-context">
+              <span class="scenario-label">代码现场</span>
+              <pre><code>"search_orders": {
+  "description": "查询订单，date_range 请确保用 YYYY/MM/DD",
+  "parameters": {
+    "kw": "关键词或订单号",
+    "limit": { "type": "integer", "description": "条数，必须在1-50之间" }
+  }
+}</code></pre>
+            </div>
+            <div class="quiz-question-block"
+                 data-correct="option-c"
+                 data-explanation-right="完全正确！『请确保』的日期格式是规则 2 的经典翻车：61 例中 44 例静默失败，Agent 根本不知道自己错了。其他几处也该修，但只有这一处会无声地坏掉。"
+                 data-explanation-wrong="其实这段 schema 五毒俱全——kw 违反规则 3、limit 违反规则 5、date_range 违反规则 2。但最致命的是 prose 格式约束：它是唯一会静默失败、让你完全察觉不到的。">
+              <h3 class="quiz-question">哪一处最可能导致「静默失败」？</h3>
+              <div class="quiz-options">
+                <button class="quiz-option" data-value="option-a" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>工具名 search_orders 太长</span>
+                </button>
+                <button class="quiz-option" data-value="option-b" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>kw 缩写有歧义（规则 3）</span>
+                </button>
+                <button class="quiz-option" data-value="option-c" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>date_range 用「请确保」写格式约束（规则 2）</span>
+                </button>
+                <button class="quiz-option" data-value="option-d" onclick="selectOption(this)">
+                  <div class="quiz-option-radio"></div>
+                  <span>limit 的约束写在 description 里（规则 5）</span>
+                </button>
+              </div>
+              <div class="quiz-feedback"></div>
+            </div>
+            <button class="quiz-check-btn" onclick="checkQuiz('quiz-rule-final')">检查答案</button>
+            <button class="quiz-reset-btn" onclick="resetQuiz('quiz-rule-final')">再试一次</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>
