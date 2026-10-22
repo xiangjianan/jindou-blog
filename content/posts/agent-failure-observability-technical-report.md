@@ -11,7 +11,7 @@ tags:
   - trace-integrity
 published: true
 createdAt: "2026-10-19 14:00:50"
-updatedAt: "2026-10-19 14:00:50"
+updatedAt: "2026-10-22 13:21:19"
 postId: 134
 ---
 
@@ -98,7 +98,9 @@ LLM agent 的工具调用失败中，最难处理的一类是静默失败：API 
 
 **阈值敏感性（0921）**：对归因数据（qwen 35 条 + glm 10 条）做 8 档阈值（0.70–0.91）× 3 种相似度度量（difflib / char3gram / tokset）的 24 组合离线扫描。发现：glm 的 6 条 ms（model_stochastic）标签在全部 24 个组合下不变——"60% 纯采样噪声"不是 0.85 阈值卡出来的边界效应，glm 重放文本与录制文本在字符级几乎完全不同（大面积措辞重写）；qwen 的 2 条 ms 复算应改判 mixed（噪声与响应并存），纯 ms 下修为 0；"glm ms ≫ qwen ms"的定性排序在 24/24 组合下稳健。同时 difflib 对中文短文本偏宽松，qwen 的部分 rd 依赖表层措辞复现，语义层面的 mixed 成分被低估——推荐跨模型对照场景使用 char3gram + t=0.80。
 
-## 7. 消失环节分类学 v0.1
+## 7. 消失环节分类学（v0.1 → v0.2）
+
+### 7.1 v0.1：四级定义与试标注
 
 对每个失效样本问一个问题：**失败信号在哪一环变得不可观测？**
 
@@ -107,11 +109,27 @@ LLM agent 的工具调用失败中，最难处理的一类是静默失败：API 
 - **E 执行级消失**：信号已回灌进模型，模型甚至读取理解了它，但行为未反应。教科书案例：模型逐字转述 `ok: false / reason: no orders matched`，随后宣布查询成功。
 - **N 归因级消失**：模型行为有反应，但标注/判据体系看不见或无法定因。L3 mixed 组属此类：反事实与重采样同时漂移，失败被笼统归入"模型不稳定"。
 
-判定规则按链路顺序取最早消失的一环。8 条试标注中 6 条无犹豫，两处分歧均在 E/N 边界——分歧不是类间混淆，而是**同一样本在多环叠加消失**（如 fake_success 样本先在执行级被接受、又在归因级被"虚报成功"标签二次吞掉），v0.2 需引入主环节 + 附加环节标注。
+v0.1 判定规则按链路顺序取最早消失的一环（单选）。8 条试标注中 6 条无犹豫，两处分歧均在 E/N 边界（fake_success 的二次消失、L3 mixed）——事后看，分歧不是类间混淆，而是**同一样本在多环叠加消失**，单选标注天然承载不了这个信息。
 
-与 SAVER（self-evolving safety，saver-self-evolving-safety-1010 综述）的 Exposure 维度对齐：SAVER 指出转移链每一环都可能吞掉信号，本分类学的增量贡献是给出每环的**操作化判据与可复用测量协议**——W 用环境重放（match 后仍无法检失败）、E 用转述对照与反事实、N 用 mixed 判据与 output-divergent 单列——补上 SAVER 缺的可操作评测面。
+与 SAVER（self-evolving safety）的 Exposure 维度对齐：SAVER 指出转移链每一环都可能吞掉信号，本分类学的增量贡献是给出每环的**操作化判据与可复用测量协议**——补上 SAVER 缺的可操作评测面。
 
 这个分类学同时把 §5.1 的发现放进了理论框架：schema 形式化档位操纵的是"写入环"之前的信息披露，而静默失败的消除依赖"写入环本身"的协议层信号——干预点与消失点错位，解释了 L0–L3 的零效应。
+
+### 7.2 v0.2：主环节 + 附加环节的双字段方案
+
+针对 v0.1 试标注暴露的 E/N 边界犹豫，v0.2 把标注升级为双字段：**主环节**（信号在哪一环最早消失，W/E/A/N 互斥单选）+ **附加环节**（同一信号在其他环节的二次消失，可多选）。判定规则随之修订：主环节按响应信号可见性定——响应体无失败痕迹（silent、fake_success 的表面成功响应）→ W；信号可见（错误码 / ok:false / `status:no_match`）但模型读到后行为仍错 → E；仅当归因判据完全失效且无任何可定因证据时 N 才可作主环节。附加环节：+E = W 主环节下模型接受表面成功数据并转述（fake_success 类）；+N = 归因判据部分或完全失效（mixed 漂移、采样主导、重采样 429 不可定）。
+
+### 7.3 v0.2 全量重标注结果（45 条）
+
+对全部可归因 trial 做纯离线全量重标注：**45 条**（qwen 35：单轮 silent/semantic/error4xx + 双轮 silent/error4xx/semantic 四档位；glm 10：404/5xx/fake_success/nonstd_ok_false），含 18 次 rd 复验证据（全部 rd_maintained，不翻转判定）。数据集 `taxonomy_v2_annotations.jsonl`（字段：trial_id/model/style/level/label_rule/main_stage/additional_stages/evidence_summary）。
+
+**主环节分布**：W 14（31%）｜E 31（69%）｜A/N 作为主环节 **0** 独立样本。按模型：qwen W12/E23，glm W2/E8。按谱系档位（qwen）：L0 W4/E5 → L3 W4/E8，E 占比 44%→67%——"档位越深消失越晚（越靠执行/归因侧）"方向一致，但样本量小待补验。
+
+**叠加消失 27/45 = 60%**：六成失效样本的失败信号不止在一环消失。组合分布：E+N 20 条（44%，最大组合）、W+N 5 条、W+E+N 2 条；E 纯净 11 条、W 纯净 7 条。仅用单选标注会丢掉近半样本的归因层信息——v0.1 试标注的 2 处"犹豫"全部被双字段消解，证实那确实是叠加消失而非类间混淆。
+
+**最关键的发现是 N 层的含义**：归因级消失几乎从不是独立环节，而是**几乎所有失效的第二层消失**（60% 全部以附加形式出现）。换言之，评估者/判据体系的盲区比任何单一模型盲区都更普遍——我们测量失效的尺子本身，是失效链路上最常被击穿的一环。其中 2 条 fake_success 呈 W+E+N 三连消失：写入层无失败痕迹 → 模型把编造订单当真转述 → 归因层采样漂移不可定因，同一失败被三层同删，值得个案深描。
+
+**与 SAVER Exposure 的实测映射**（v0.1 仅理论对齐，v0.2 补上实测占比）：W↔write-time 36%（主 14 + 附加 2）、A↔activation 0%（理论级）、E↔execution 73%（主 31 + 附加 2）、N↔attribution 60%（全以附加形式出现）。
 
 ## 8. rd 复验 18/18：修正判据下的稳健性
 
@@ -139,6 +157,7 @@ LLM agent 的工具调用失败中，最难处理的一类是静默失败：API 
 
 - **实验台路径**：`research/schema-formalization-exp/`（runner/mock_server.py、runner.py、classify.py、annotation-guidelines）；轨迹归因：`research/trajectory-replay/`。
 - **脚本清单**：`threshold_scan.py`（阈值扫描）、`ablation_0923.py`（glm 消融）、`rd_reval_1013.py`（rd 复验）；key 全程环境变量注入，不落盘不进命令行。
+- **v0.2 分类学数据**：`trajectory-replay/results/taxonomy_v2_annotations.jsonl`（45 条双字段标注）+ 生成脚本 `trajectory-replay/scripts/build_taxonomy_v2.py`（纯离线重标注，未调模型）。
 - **数据**：`runner/results/`（单轮缺陷批次 `search_orders_L*_silent_*.jsonl`、双轮批次 `twoturn_*` 共 60 trials、glm 批次 40 trials）；`trajectory-replay/results/`（`threshold_scan.json`、`ablation_glm_*.json`、`rd_reval_*.json` × 18）。
 - **判据版本链**：单次 cf 判据（0919）→ 阈值×度量 24 组合扫描（0921，冻结 difflib 0.85 不动、附 char3gram 列）→ 组内收敛判据 pw > cr + 0.1（0923）→ 18/18 复验（1013）。标注规则预冻结于任何跑数之前，全程 κ=1.0。
 - **研究笔记链**（按时间序）：research-ideas-0903 → survey-tool-reliability-0903 → experiment-design-0904 → methodological-notes-0905 → rqc-first/second-results-0907 → rqc-glm-replication-0908 → threshold-calibration-0921 → glm-ablation-0923 → rd-revalidation-1013 → disappearance-taxonomy-1017 → direction-a-wrapup-1016。
