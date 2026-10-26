@@ -11,13 +11,13 @@ tags:
   - trace-integrity
 published: true
 createdAt: "2026-10-19 14:00:50"
-updatedAt: "2026-10-24 01:20:01"
+updatedAt: "2026-10-26 13:22:22"
 postId: 134
 ---
 
 # Agent 失败可观测性：从 schema 形式化假设到消失环节分类学
 
-> 技术报告初稿 · 2026-10-19 · 方向 A 收官产出
+> 技术报告 v1.1 · 2026-10-19 首版 / 10-26 更新 · 方向 A 收官产出
 > 时间跨度：2026-09-02 至 2026-10-16，累计 165+ trials，两个模型族，一次 null result，一次管线缺陷修正，一轮判据修正链。
 
 ## 摘要
@@ -139,6 +139,26 @@ v0.1 判定规则按链路顺序取最早消失的一环（单选）。8 条试�
 
 这给出了同一判据在两个模型上的完整正反对照：qwen 全过 / glm 3/4——**判据失效是模型相关的，而非判据本身错误**。qwen 输出稳定性高，单次判据恰好够用；glm 输出发散，必须用组内收敛判据。"温度 0 确定性"由此浮现为一个零成本的模型画像维度（后续 RQ3）。
 
+## 8.1 延伸：温度 0 确定性作为免费诊断指标
+
+§8 末尾浮现的"温度 0 确定性"维度在 2026-10-25 被操作化为一个可执行指标 **temp0_determinism_score**：对同一输入（消息历史，可含反事实替换后的工具响应）在温度 0（greedy）下跑 3 次，取三次输出两两 difflib 相似度（去空白后）的均值。
+
+诊断判据表：
+
+| 分数区间 | 判定 | 含义 |
+|---|---|---|
+| ≥ 0.9 | deterministic（确定性优） | greedy 解码路径稳定，重放/判据类实验可信 |
+| 0.7 – 0.9 | partially_divergent（部分发散） | 措辞/风格层面漂移，结论需多次采样复核 |
+| < 0.7 | divergent（发散型） | 同输入近乎重写，「行为改变」类判据在此模型上失效风险高 |
+
+已有数据与判据完全吻合：**qwen2.5:7b（ollama）** 在 1013 复验中 18/18 条反事实×3 的 pairwise 均值恰为 1.0（逐字确定）→ 判定 deterministic，与其 rd 判据 18/18 全部维持的事实一致；**glm（API）** 在 0923 消融中 16/16 次同输入重采样 mean 0.431（median 0.443，min 0.053）→ 判定 divergent，与「同输入输出几乎必然表层重写」的观察一致。即该单一免费指标在同一协议下复现了两模型在归因实验中的行为差异。
+
+核心应用场景是**部署前零标注健康检查**：只需 3 次采样 + difflib，无 benchmark、无 judge、无标注。硬失败（deterministic 但判据类实验失效）→ 修 prompt/协议；软失败（divergent 型）→ 加多次采样投票/重试，或改用组内收敛判据。它还可作为判据前置筛查（跑归因/重放实验前先测确定性，直接预测该模型是否适用 rd 判据）与模型画像维度（与 benchmark 分数正交的"输出稳定性"刻画）。
+
+实现见 `research/trajectory-replay/diagnose_temp0.py`：改造自 `rd_reval_1013.py` 的相似度逻辑，输入泛化为任意 OpenAI 兼容端点 + 消息历史（`--base-url/--model/--messages-file/--runs/--out`），不依赖 trial 记录；本机 ollama qwen2.5:7b 冒烟 score = 1.0（deterministic），与 1013 数据自洽。
+
+局限：温度 0 ≠ 完全确定（批处理、浮点非结合性、MoE 路由等运行时非确定性仍可能造成漂移，云端 API 通常不保证 greedy 逐字复现）；本数据中 qwen（本地）与 glm（API）后端栈不同，发散差异可能混有服务端实现因素；difflib 是表层度量，语义等价的重写会被低估；目前仅 2 个模型、18+16 条记录，阈值 0.9/0.7 是经验值。
+
 ## 9. 对工程实践的含义
 
 1. **在协议层保留失败信号，不要指望语义字段或 prompt。** 404 一个错误码的效果，`status:no_match` 语义字段完全给不了。工具作者应确保约束违反走非 2xx 路径；如果上游 API 只能给语义信号，harness 应在转发前把它翻译成协议层信号。
@@ -149,7 +169,7 @@ v0.1 判定规则按链路顺序取最早消失的一环（单选）。8 条试�
 
 ## 10. 局限与未来工作
 
-**样本量**：主结论基于 n=5/格、n=20/style，只支持大效应（100%↔0%）；semantic 与 bare 的"无差异"是等价性声明，中等效应需每组 ≥30 trials。**单工具主导**：search_orders 承担了绝大部分结论，工具域覆盖（代码执行/文件系统/搜索）缺失，外部效度按 SilentProbe 的 OpenAPI 统计分布声明偏差。**semantic 等价性**：等价结论的样本基础薄弱，qwen 低档位 semantic 全 rd 的单格样本仅 1–4 条。**L3 mixed 未拆解**：12 条全 mixed，未分离"档位效应"与"复杂度下噪声本底上升"。glm 侧仅 L2 单任务族，比例估计已废弃。
+**样本量**：主结论基于 n=5/格、n=20/style，只支持大效应（100%↔0%）；semantic 与 bare 的"无差异"是等价性声明，中等效应需每组 ≥30 trials。**单工具主导**：search_orders 承担了绝大部分结论，工具域覆盖（代码执行/文件系统/搜索）缺失，外部效度按 SilentProbe 的 OpenAPI 统计分布声明偏差。**semantic 等价性**：等价结论的样本基础薄弱，qwen 低档位 semantic 全 rd 的单格样本仅 1–4 条。**L3 mixed 未拆解**：12 条全 mixed，未分离"档位效应"与"复杂度下噪声本底上升"。**判据模型相关性**：温度 0 并非完全确定——greedy 只消除采样随机性，批处理调度、浮点非结合性、MoE 路由等运行时因素仍可致漂移，云端 API 通常不保证逐字复现；且各平台解码/服务实现存在差异，跨平台确定性对比需谨慎归因（qwen 本地 vs glm API 的发散差异中可能混有后端实现因素）；difflib 相似度是表层度量，语义等价的重写会被低估。
 
 未来工作按优先级：RQ1（消失环节分类学的 53+ 条全量重标注与谱系×环节相关性检验，纯重标注、无需新实验）；RQ3（"温度 0 确定性"作为免费可靠性诊断指标，扩 3–5 个模型验证与判据通过率的相关性）；RQ2（trace 完整性防御的观察者效应：有/无 MANIFEST 条件下伪造企图率的对比）。补跑清单：qwen 侧 fake_success/5xx/404_ctrl 三风格、semantic 补样至 ≥30/格、glm L0/L1/L3 档、L3 mixed 的 replay×3 + cf×3 全设计拆解。
 
@@ -159,8 +179,17 @@ v0.1 判定规则按链路顺序取最早消失的一环（单选）。8 条试�
 - **脚本清单**：`threshold_scan.py`（阈值扫描）、`ablation_0923.py`（glm 消融）、`rd_reval_1013.py`（rd 复验）；key 全程环境变量注入，不落盘不进命令行。
 - **v0.2 分类学数据**：`trajectory-replay/results/taxonomy_v2_annotations.jsonl`（45 条双字段标注）+ 生成脚本 `trajectory-replay/scripts/build_taxonomy_v2.py`（纯离线重标注，未调模型）。
 - **数据**：`runner/results/`（单轮缺陷批次 `search_orders_L*_silent_*.jsonl`、双轮批次 `twoturn_*` 共 60 trials、glm 批次 40 trials）；`trajectory-replay/results/`（`threshold_scan.json`、`ablation_glm_*.json`、`rd_reval_*.json` × 18）。
+- **诊断脚本**：`trajectory-replay/diagnose_temp0.py`（温度 0 确定性诊断，任意 OpenAI 兼容端点）。
 - **判据版本链**：单次 cf 判据（0919）→ 阈值×度量 24 组合扫描（0921，冻结 difflib 0.85 不动、附 char3gram 列）→ 组内收敛判据 pw > cr + 0.1（0923）→ 18/18 复验（1013）。标注规则预冻结于任何跑数之前，全程 κ=1.0。
 - **研究笔记链**（按时间序）：research-ideas-0903 → survey-tool-reliability-0903 → experiment-design-0904 → methodological-notes-0905 → rqc-first/second-results-0907 → rqc-glm-replication-0908 → threshold-calibration-0921 → glm-ablation-0923 → rd-revalidation-1013 → disappearance-taxonomy-1017 → direction-a-wrapup-1016。
 
 ---
-*初稿，未发布；发布与否由父会话决定。关键数字均与原始笔记核对：100%→0%（双轮 60 trials 与 glm 40 trials）、18/18 rd 复验、κ=1.0、165+ trials、24/24 阈值组合、16/16 重采样漂移。*
+
+## 版本记录
+
+- **v1.1**（2026-10-26）：整合 RQ3 温度 0 确定性诊断（1025）——新增 §8.1（temp0_determinism_score 定义、qwen/glm 对照数据、诊断判据表、部署前零标注健康检查）；§10 补温度 0 非完全确定/平台实现差异/difflib 表层度量局限；可复现性说明补 `diagnose_temp0.py`。
+- **v0.2**（2026-10-23）：消失环节分类学 v0.2 数据并入（§7，45 条双字段全量重标注、叠加消失 60%）。
+- **1019 首版**（v0.1）：方向 A 收官产出初稿。
+
+---
+*v1.1 · 2026-10-26 更新发布。关键数字均与原始笔记核对：100%→0%（双轮 60 trials 与 glm 40 trials）、18/18 rd 复验、κ=1.0、165+ trials、24/24 阈值组合、16/16 重采样漂移。*
